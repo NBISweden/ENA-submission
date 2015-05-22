@@ -35,19 +35,19 @@ source ./submit.conf
 ## target invoked in the next step, so we do not need to call this
 ## explicitly here.
 
-## make -f submit.mk bam-md5 bamfile=${token_name}/FILES/${token_name}.bam
+## make -f submit.mk bam-md5 bamfile="${token_name}/FILES/${token_name}.bam"
 
 # Step 2: Upload the BAM file and MD5 checksum file using ftp
 
 ## make -f submit.mk bam-upload \
-##    bamfile=${token_dir}/FILES/${token_name}.bam \
+##    bamfile="${token_dir}/FILES/${token_name}.bam" \
 ##    webin_user="${webin_user}" \
 ##    webin_pass="${webin_pass}"
 
 # Step 3: Submit the metadata and data files using the ENA REST API
 
 make -f submit.mk xml-validate \
-    bamfile=${token_dir}/FILES/${token_name}.bam \
-    submission_xml=${token_dir}/XML/simple/submission.xml \
+    bamfile="${token_dir}/FILES/${token_name}.bam" \
+    submission_xml="${token_dir}/XML/simple/submission.xml" \
     webin_user="${webin_user}" \
     webin_pass="${webin_pass}"
