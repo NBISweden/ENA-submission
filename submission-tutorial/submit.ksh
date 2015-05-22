@@ -1,4 +1,4 @@
-#!/bin/ksh -x
+#!/bin/ksh -xe
 
 #=======================================================================
 # This script follows the tutorial available here:
@@ -9,7 +9,7 @@
 #=======================================================================
 
 # The "SRA.zip" archive was unpacked here:
-SRA_archive="${HOME}/Work/Development/ENA-submission-code/ena-tutorial/SRA"
+SRA_archive="${HOME}/Work/Development/code/scripts/ENA/submission-tutorial/SRA"
 
 # The unpacked SRA archive contains a number of subfolders, each with
 # a BAM file and a number of XML files.  Each student at the tutorial
@@ -17,6 +17,9 @@ SRA_archive="${HOME}/Work/Development/ENA-submission-code/ena-tutorial/SRA"
 # subfolder.  The $token_name contains the name of the subfolder that
 # this script will use.
 token_name="archery"
+
+token_dir=$( perl -MFile::Spec \
+    -e "print File::Spec->abs2rel('${SRA_archive}/${token_name}')" )
 
 # Get ENA Webin user details.  This file should define the two shell
 # variables "$webin_user" and "$webin_pass".
@@ -36,8 +39,15 @@ source ./submit.conf
 
 # Step 2: Upload the BAM file and MD5 checksum file using ftp
 
-make -f submit.mk bam-upload \
-    bamfile=${token_name}/FILES/${token_name}.bam \
+## make -f submit.mk bam-upload \
+##    bamfile=${token_dir}/FILES/${token_name}.bam \
+##    webin_user="${webin_user}" \
+##    webin_pass="${webin_pass}"
+
+# Step 3: Submit the metadata and data files using the ENA REST API
+
+make -f submit.mk xml-validate \
+    bamfile=${token_dir}/FILES/${token_name}.bam \
+    submission_xml=${token_dir}/XML/simple/submission.xml \
     webin_user="${webin_user}" \
     webin_pass="${webin_pass}"
-
