@@ -1,0 +1,43 @@
+#!/bin/ksh -x
+
+#=======================================================================
+# This script follows the tutorial available here:
+# http://www.ebi.ac.uk/ena/support/read-submission-rest-tutorial
+#
+# It makes use of a file called "SRA.zip" which is available from here:
+# http://www.ebi.ac.uk/sites/ebi.ac.uk/files/groups/ena/documents/SRA.zip
+#=======================================================================
+
+# The "SRA.zip" archive was unpacked here:
+SRA_archive="${HOME}/Work/Development/ENA-submission-code/ena-tutorial/SRA"
+
+# The unpacked SRA archive contains a number of subfolders, each with
+# a BAM file and a number of XML files.  Each student at the tutorial
+# was (apparently) given a piece of paper with the name of "their"
+# subfolder.  The $token_name contains the name of the subfolder that
+# this script will use.
+token_name="archery"
+
+# Get ENA Webin user details.  This file should define the two shell
+# variables "$webin_user" and "$webin_pass".
+source ./submit.conf
+
+#-----------------------------------------------------------------------
+# Part 1. Create a new submission using REST API
+#-----------------------------------------------------------------------
+
+# Step 1: Calculate the MD5 checksum for the BAM file
+
+## The Makefile target "bam-md5" is a prerequisite for the "bam-upload"
+## target invoked in the next step, so we do not need to call this
+## explicitly here.
+
+## make -f submit.mk bam-md5 bamfile=${token_name}/FILES/${token_name}.bam
+
+# Step 2: Upload the BAM file and MD5 checksum file using ftp
+
+make -f submit.mk bam-upload \
+    bamfile=${token_name}/FILES/${token_name}.bam \
+    webin_user="${webin_user}" \
+    webin_pass="${webin_pass}"
+
