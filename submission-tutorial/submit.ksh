@@ -1,7 +1,7 @@
 #!/bin/ksh -e
 
-xmltidy_cmd="$( which tidy || cat )"
-if [[ "$xmltidy_cmd" != "cat" ]]; then
+xmltidy_cmd="$( which tidy || which cat )"
+if [[ $( basename $xmltidy_cmd ) != "cat" ]]; then
     xmltidy_cmd="$xmltidy_cmd -quiet -indent -xml"
 fi
 
