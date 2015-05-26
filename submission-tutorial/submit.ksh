@@ -1,7 +1,7 @@
 #!/bin/ksh -e
 
 xmltidy_cmd="$( which tidy || cat )"
-if [[ $xmltidy_cmd != "cat" ]]; then
+if [[ "$xmltidy_cmd" != "cat" ]]; then
     xmltidy_cmd="$xmltidy_cmd -quiet -indent -xml"
 fi
 
@@ -23,8 +23,8 @@ SRA_archive="${HOME}/Work/Development/code/scripts/ENA/submission-tutorial/SRA"
 # this script will use.
 token_name="archery"
 
-token_dir=$( perl -MFile::Spec \
-    -e "print File::Spec->abs2rel('${SRA_archive}/${token_name}')" )
+token_dir="$( perl -MFile::Spec \
+    -e "print File::Spec->abs2rel('${SRA_archive}/${token_name}')" )"
 
 # Get ENA Webin user details.  This file should define the two shell
 # variables "$webin_user" and "$webin_pass".
