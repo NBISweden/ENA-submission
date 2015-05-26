@@ -2,7 +2,8 @@ md5_cmd := $(shell which md5sum || which md5)
 
 .PHONY: \
 	bam-md5 \
-	bam-upload
+	bam-upload \
+	xml-validate
 
 %.md5: %
 	@echo "==> Calculating MD5 checksum for $<"
@@ -24,8 +25,8 @@ md5_cmd := $(shell which md5sum || which md5)
 	  -F "SAMPLE=@sample.xml" \
 	  -F "EXPERIMENT=@experiment.xml" \
 	  -F "RUN=@run.xml" \
-	  "https://www-test.ebi.ac.uk/ena/submit/drop-box/submit/?auth=ENA%20${webin_user}%20${webin_pass}" && \
-	touch $(shell basename $@)
+	  "https://www-test.ebi.ac.uk/ena/submit/drop-box/submit/?auth=ENA%20${webin_user}%20${webin_pass}" \
+	  >submission-receipt.xml && touch $(shell basename $@)
 
 bam-md5: ${bamfile}.md5
 

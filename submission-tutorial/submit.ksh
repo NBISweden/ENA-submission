@@ -1,4 +1,9 @@
-#!/bin/ksh -xe
+#!/bin/ksh -e
+
+xmltidy_cmd="$( which tidy || cat )"
+if [[ $xmltidy_cmd != "cat" ]]; then
+    xmltidy_cmd="$xmltidy_cmd -quiet -indent -xml"
+fi
 
 #=======================================================================
 # This script follows the tutorial available here:
@@ -51,3 +56,15 @@ make -f submit.mk xml-validate \
     submission_xml="${token_dir}/XML/simple/submission.xml" \
     webin_user="${webin_user}" \
     webin_pass="${webin_pass}"
+
+# Test for successful validation
+
+if ! grep -q 'RECEIPT.*success="true"' \
+    "${token_dir}/XML/simple/submission-receipt.xml"
+then
+    echo "!!> Validation of sumbission XML failed."
+    echo "!!> See '${token_dir}/XML/simple/submission-receipt.xml'"
+    echo "!!> Fix this and remove '${token_dir}/XML/simple/submission.xml.validate-done'"
+    $xmltidy_cmd "${token_dir}/XML/simple/submission-receipt.xml"
+    exit 1
+fi
