@@ -1,5 +1,16 @@
 #!/bin/ksh -e
 
+# Prerequisites:
+#
+#   This script (submit.ksh):
+#   * HTML Tidy (the cammand 'tidy')
+#   * Perl module File::Spec
+#   * GNU make
+#
+#   The Makefile (submit.mk):
+#   * Either of the commands 'md5' or 'md5sum'
+#   * Curl (the command 'curl')
+
 xmltidy_cmd="$( which tidy || which cat )"
 if [[ $( basename $xmltidy_cmd ) != "cat" ]]; then
     xmltidy_cmd="$xmltidy_cmd -quiet -indent -xml"
