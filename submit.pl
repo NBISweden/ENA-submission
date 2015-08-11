@@ -19,16 +19,15 @@ my $ENA_PRODUCTION_URL =
   'https://www.ebi.ac.uk/ena/submit/drop-box/submit/?';
 my $ENA_WEBIN_FTP = 'webin.ebi.ac.uk';
 
-use constant
 # All $opt_ variables are global.
 #
 my $opt_bamfile;
 my $opt_action;
 my $opt_xmldir;
-my $opt_submit = 0;
+my $opt_submit = 1;
 my $opt_test   = 1;
 
-my $opt_conf;
+my $opt_config;
 
 my $opt_help = 0;
 
@@ -36,7 +35,7 @@ if ( !GetOptions( "bamfile|b=s" => \$opt_bamfile,
                   "action|a=s"  => \$opt_action,
                   "xmldir|x=s"  => \$opt_xmldir,
                   "submit|s!"   => \$opt_submit,
-                  "conf|c=s"    => \$opt_conf,
+                  "config|c=s"  => \$opt_config,
                   "test|t!"     => \$opt_test,
                   "help|h!"     => \$opt_help ) )
 {
@@ -57,14 +56,15 @@ if ( !defined($opt_action) ) {
 }
 
 if ( $opt_action eq 'upload' ) {
-    if ( !( defined($opt_bamfile) && defined($opt_xmldir) ) ||
-         ( $opt_submit && !defined($opt_config) ) )
+    if ( !( defined($opt_bamfile) &&
+            defined($opt_xmldir)  &&
+            defined($opt_config) ) )
     {
-        pod2usage( { -message => '!!> Need --bamfile and --xmldir, ' .
-                       'and either --config or --nosubmit ' .
-                       'for action "upload"',
-                     -verbose => 0,
-                     -exitval => 1 } );
+        pod2usage(
+              { -message => '!!> Need at least --corfig, --bamfile, ' .
+                  'and --xmldir for action "upload"',
+                -verbose => 0,
+                -exitval => 1 } );
     }
 
     action_upload();
@@ -76,22 +76,21 @@ sub action_upload
     # ACTION = "upload"
     #-------------------------------------------------------------------
 
-    my ( $xmldir, $username, $password, $bamfile ) = @_;
-
     #
     # Step 1: Calculate MD5 digest for the BAM file.
     #
 
-    if ( !( defined($bamfile) && -f $bamfile ) ) {
-        pod2usage( { -message => '!!> --bamfile not specified, ' .
-                       'or specified BAM file was not found',
-                     -verbose => 0,
-                     -exitval => 1 } );
+    if ( !-f $opt_bamfile ) {
+        pod2usage(
+              { -message => '!!> The specified BAM file was not found',
+                -verbose => 0,
+                -exitval => 1 } );
     }
 
-    my $digest = file_md5_hex($bamfile);
+    my $digest = file_md5_hex($opt_bamfile);
 
-    my $md5_out = IO::File->new( sprintf( "%s.md5", $bamfile ), "w" );
+    my $md5_out =
+      IO::File->new( sprintf( "%s.md5", $opt_bamfile ), "w" );
     $md5_out->print( $digest, "\n" );
     $md5_out->close();
 
@@ -104,20 +103,20 @@ sub action_upload
 
         my ( $username, $password ) = get_userpass();
 
-        my $ftp = Net::FTP->new($ENA_FTP_SERVER);
+        my $ftp = Net::FTP->new( $ENA_WEBIN_FTP, Debug => 1 );
 
         $ftp->login( $username, $password )
           or
           croak( sprintf( "Can not 'login' on ENA FTP server: %s",
                           $ftp->message() ) );
 
-        $ftp->put($bamfile)
+        $ftp->put($opt_bamfile)
           or
           croak( sprintf( "Can not 'put' BAM file " .
                             "onto ENA FTP server: %s",
                           $ftp->message() ) );
 
-        $ftp->put( sprintf( "%s.md5", $bamfile ) )
+        $ftp->put( sprintf( "%s.md5", $opt_bamfile ) )
           or
           croak( sprintf( "Can not 'put' BAM file MD5 digest " .
                             "onto ENA FTP server: %s",
@@ -136,14 +135,13 @@ sub get_userpass
                      -exitval => 1 } );
     }
 
-    $conf = Config::Simple->new($opt_config);
+    my $config = Config::Simple->new($opt_config);
 
-    my $username = $conf->param('username');
-    my $password = $conf->param('password');
+    my $username = $config->param('username');
+    my $password = $config->param('password');
 
     return ( $username, $password );
 }
-
 
 __END__
 
@@ -157,8 +155,8 @@ submit.pl - A script that handles submission of data to ENA at EBI.
 
     ./submit.pl --help
 
-    ./submit.pl --action=upload --bamfile=XXX \
-        [ --nosubmit | --config=XXX ]
+    ./submit.pl --action=upload \
+        --config=XXX --bamfile=XXX --xmldir=XXX [ --nosubmit ]
 
 =head1 OPTIONS
 
@@ -175,7 +173,8 @@ The action to take.  This is one of the following:
 Upload a BAM file to ENA.  The MD5 digest of the BAM file is written to
 C<B<bamfile>.md5> and the data is submitted to the ENA server.
 
-Options used: B<--bamfile>, B<--submit>/B<--nosubmit>, B<--config>.
+Options used: B<--config>, B<--bamfile>, B<--xmldir>,
+B<--submit>/B<--nosubmit>
 
 =back
 
