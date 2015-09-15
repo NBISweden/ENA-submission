@@ -10,7 +10,7 @@ use warnings;
 use Carp;
 use Config::Simple;
 use Digest::MD5::File qw( file_md5_hex );
-#notyet use File::Spec::Functions;
+use File::Spec::Functions qw( splitpath catfile );
 use Getopt::Long;
 use IO::File;
 use Net::FTP;
@@ -27,7 +27,7 @@ my $ENA_WEBIN_FTP = 'webin.ebi.ac.uk';
 #
 my $opt_action;
 my $opt_config;
-my $opt_debug = 0;
+my $opt_debug = 1;
 my $opt_file;
 my $opt_help   = 0;
 my $opt_quiet  = 0;
@@ -63,23 +63,24 @@ if ( !defined($opt_action) ) {
 
 # Each action should test here for existance of each required option.
 # Validation of the option values (e.g. checking that files exists etc.)
-# happens in the respctive action subroutine.
-if ( $opt_action eq 'bamupload' ) {
+# happens in the respective action subroutine.
+
+if ( $opt_action eq 'upload' ) {
     if ( !( defined($opt_file) && defined($opt_config) ) ) {
         pod2usage(
                { -message => '!!> Need at least --config and --file ' .
-                   'for action "bamupload"',
+                   'for action "upload"',
                  -verbose => 0,
                  -exitval => 1 } );
     }
 
-    action_bamupload();
+    action_upload();
 }
 
-sub action_bamupload
+sub action_upload
 {
     #-------------------------------------------------------------------
-    # ACTION = "bamupload"
+    # ACTION = "upload"
     #-------------------------------------------------------------------
 
     #
@@ -87,16 +88,16 @@ sub action_bamupload
     #
 
     if ( !-f $opt_file ) {
-        pod2usage(
-              { -message => '!!> The specified BAM file was not found',
-                -verbose => 0,
-                -exitval => 1 } );
+        printf( "!!> Error: The BAM file '%s' was not found\n",
+                $opt_file );
+        exit(1);
     }
 
     my $digest = file_md5_hex($opt_file);
 
     my $md5_file = sprintf( "%s.md5", $opt_file );
     my $md5_out = IO::File->new( $md5_file, "w" );
+
     $md5_out->print( $digest, "\n" );
     $md5_out->close();
 
@@ -104,12 +105,54 @@ sub action_bamupload
         printf( "==> Wrote MD5 digest to '%s'\n", $md5_file );
     }
 
+    #
+    # Step 2: Add the MD5 digest to the file "manifest.all" in the same
+    # directory as the BAM data file.  If this file exists, read it and
+    # make sure each entry is unique before overwriting it with all tho
+    # original digests and the new addiional digest.
+    #
+
+    my ( $bam_path, $bam_file ) = ( splitpath($opt_file) )[ 1, 2 ];
+    my $manifest_file = catfile( $bam_path, "manifest.all" );
+
+    my %manifest = ( $bam_file => $digest );
+
+    if ( -f $manifest_file ) {
+        my $manifest_in = IO::File->new( $manifest_file, "r" );
+
+        while ( my $line = $manifest_in->getline() ) {
+            chomp($line);
+            my ( $file, $file_digest ) = split( /\t/, $line );
+            $manifest{$file} = $file_digest;
+
+            if ( !-f catfile( $bam_path, $file ) ) {
+                printf( "!!> Warning: Can not find BAM file '%s' " .
+                          "listed in manifest file '%s'\n",
+                        catfile( $bam_path, $file ), $manifest_file );
+            }
+        }
+
+        $manifest_in->close();
+    }
+
+    my $manifest_out = IO::File->new( $manifest_file, "w" );
+
+    foreach my $file ( sort( keys(%manifest) ) ) {
+        $manifest_out->printf( "%s\t%s\n", $file, $manifest{$file} );
+    }
+
+    $manifest_out->close();
+
+    if ( !$opt_quiet ) {
+        printf( "==> Added MD5 digest to '%s'\n", $manifest_file );
+    }
+
     if ( !$opt_submit ) {
         return;
     }
 
     #
-    # Step 2: Upload the BAM file and the MD5 digest to the ENA FTP
+    # Step 3: Upload the BAM file and the MD5 digest to the ENA FTP
     # server.
     #
 
@@ -139,15 +182,15 @@ sub action_bamupload
         print( "==> Submitted BAM file and MD5 digest " .
                "to ENA FTP server\n" );
     }
-} ## end sub action_bamupload
+} ## end sub action_upload
 
 sub get_userpass
 {
-    if ( !( defined($opt_config) && -f $opt_config ) ) {
-        pod2usage( { -message => '!!> --config not specified, ' .
-                       'or specified configuration file was not found',
-                     -verbose => 0,
-                     -exitval => 1 } );
+    if ( !-f $opt_config ) {
+        printf( "!!> Error: The specified configuration file '%s' " .
+                  "was not found\n",
+                $opt_config );
+        exit(1);
     }
 
     my $config = Config::Simple->new($opt_config);
@@ -172,7 +215,7 @@ submit.pl - A script that handles submission of data to ENA at EBI.
 
 =head2 Actions
 
-    ./submit.pl --action=bamupload \
+    ./submit.pl --action=upload \
         --config=XXX --file=XXX [ --nosubmit ]
 
 =head1 OPTIONS
@@ -185,21 +228,36 @@ The action to take.  This is one of the following:
 
 =over 16
 
-=item B<bamupload>
+=item B<upload>
 
-Upload a single BAM file to ENA.  The MD5 digest of the BAM file is
-written to C<B<file>.md5> and the data is submitted to the ENA
-server.  When submitting multiple BAM files, this script should be
-invoked once for each file, maybe like this (for C<sh>-compatible
-shells):
+Upload a single BAM file to ENA.
+
+The BAM file is specified by the
+B<--file=C<XXX>> option.
+
+The MD5 digest (checksum) of the file is written to C<B<XXX>.md5> and
+the data is submitted to the ENA FTP server.
+
+The MD5 digest is also added to a "manifest file" called C<manifest.all>
+in the same directory as the BAM data file.  It is assumed that all BAM
+files resides in the one and same directory.
+
+When submitting multiple BAM files, this script should be invoked once
+for each file, maybe like this (for B<sh>-compatible shells):
 
     for bam in *.bam; do
-        ./submit.pl --action=bamupload \
+        ./submit.pl --action=upload \
             --config=XXX --file="$bam"
     done
 
 Options used: B<--config>, B<--file>, and either B<--submit> or
 B<--nosubmit> (B<--submit> is the default).
+
+=item B<submit>
+
+Submit an XML file to ENA.
+
+The XML file is specified by the B<--file=C<XXX>> option.
 
 =back
 
@@ -215,11 +273,11 @@ Example configuration file:
 
 =item B<--debug>
 
-Display various debug output.
+Display various debug output.  This is the default during development.
 
 =item B<--file> or B<-f>
 
-The BAM file to upload with the "bamupload" action.
+The BAM file to upload with the "upload" action.
 
 =item B<--help> or B<-h>
 
