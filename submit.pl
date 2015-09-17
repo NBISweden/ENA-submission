@@ -84,11 +84,11 @@ sub action_upload
     #-------------------------------------------------------------------
 
     #
-    # Step 1: Calculate MD5 digest for the BAM file.
+    # Step 1: Calculate MD5 digest for the data file.
     #
 
     if ( !-f $opt_file ) {
-        printf( "!!> Error: The BAM file '%s' was not found\n",
+        printf( "!!> Error: The data file '%s' was not found\n",
                 $opt_file );
         exit(1);
     }
@@ -107,7 +107,7 @@ sub action_upload
 
     #
     # Step 2: Add the MD5 digest to the file "manifest.all" in the same
-    # directory as the BAM data file.  If this file exists, read it and
+    # directory as the data file.  If this file exists, read it and
     # make sure each entry is unique before overwriting it with all tho
     # original digests and the new addiional digest.
     #
@@ -126,7 +126,7 @@ sub action_upload
             $manifest{$file} = $file_digest;
 
             if ( !-f catfile( $bam_path, $file ) ) {
-                printf( "!!> Warning: Can not find BAM file '%s' " .
+                printf( "!!> Warning: Can not find data file '%s' " .
                           "listed in manifest file '%s'\n",
                         catfile( $bam_path, $file ), $manifest_file );
             }
@@ -152,7 +152,7 @@ sub action_upload
     }
 
     #
-    # Step 3: Upload the BAM file and the MD5 digest to the ENA FTP
+    # Step 3: Upload the data file and the MD5 digest to the ENA FTP
     # server.
     #
 
@@ -167,19 +167,19 @@ sub action_upload
 
     $ftp->put($opt_file)
       or
-      croak( sprintf( "Can not 'put' BAM file onto ENA FTP server: %s",
+      croak( sprintf( "Can not 'put' data file onto ENA FTP server: %s",
                       $ftp->message() ) );
 
     $ftp->put( sprintf( "%s.md5", $opt_file ) )
       or
-      croak( sprintf( "Can not 'put' BAM file MD5 digest " .
+      croak( sprintf( "Can not 'put' data file MD5 digest " .
                         "onto ENA FTP server: %s",
                       $ftp->message() ) );
 
     $ftp->quit();
 
     if ( !$opt_quiet ) {
-        print( "==> Submitted BAM file and MD5 digest " .
+        print( "==> Submitted data file and MD5 digest " .
                "to ENA FTP server\n" );
     }
 } ## end sub action_upload
@@ -215,8 +215,19 @@ submit.pl - A script that handles submission of data to ENA at EBI.
 
 =head2 Actions
 
+=head3 "upload"
+
+The B<upload> action is for uploding data files.
+
     ./submit.pl --action=upload \
         --config=XXX --file=XXX [ --nosubmit ]
+
+=head3 "submit"
+
+The B<submit> action is for submitting XML files.
+
+    ./submit.pl --action=submit \
+        --config=XXX --file=XXX [ --nosubmit ] [ further XML files ]
 
 =head1 OPTIONS
 
@@ -230,19 +241,20 @@ The action to take.  This is one of the following:
 
 =item B<upload>
 
-Upload a single BAM file to ENA.
+Upload a single data file to ENA.  The data file is a file in BAM or
+CRAM format or in whatever other file format ENA accepts, no check is
+made of the data file format or its integrity by this script.
 
-The BAM file is specified by the
-B<--file=C<XXX>> option.
+The data file is specified by the B<--file=C<XXX>> option.
 
 The MD5 digest (checksum) of the file is written to C<B<XXX>.md5> and
-the data is submitted to the ENA FTP server.
+both the data and digest is submitted to the ENA FTP server.
 
 The MD5 digest is also added to a "manifest file" called C<manifest.all>
-in the same directory as the BAM data file.  It is assumed that all BAM
+in the same directory as the data file.  It is assumed that all data
 files resides in the one and same directory.
 
-When submitting multiple BAM files, this script should be invoked once
+When submitting multiple data files, this script should be invoked once
 for each file, maybe like this (for B<sh>-compatible shells):
 
     for bam in *.bam; do
@@ -257,7 +269,8 @@ B<--nosubmit> (B<--submit> is the default).
 
 Submit an XML file to ENA.
 
-The XML file is specified by the B<--file=C<XXX>> option.
+The XML submission file is specified by the B<--file=C<XXX>> option and
+any additional XML file is added to the end of the command line.
 
 =back
 
@@ -277,7 +290,9 @@ Display various debug output.  This is the default during development.
 
 =item B<--file> or B<-f>
 
-The BAM file to upload with the "upload" action.
+The data file to upload with the B<upload> action.
+
+The submission XML to use with the B<submit> action.
 
 =item B<--help> or B<-h>
 
