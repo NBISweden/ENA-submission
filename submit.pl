@@ -244,7 +244,7 @@ The action to take.  This is one of the following:
 =item B<upload>
 
 Upload a single data file to ENA.  The data file is a file in BAM or
-CRAM format or in whatever other file format ENA accepts, no check is
+CRAM format or in whatever other file format ENA accepts.  No check is
 made of the data file format or its integrity by this script.
 
 The data file is specified by the B<--file=C<XXX>> option.
@@ -264,8 +264,9 @@ for each file, maybe like this (for B<sh>-compatible shells):
             --config=XXX --file="$bam"
     done
 
-Options used: B<--config>, B<--file>, and either B<--submit> or
-B<--nosubmit> (B<--submit> is the default).
+Options used: B<--config>, B<--file> and B<--submit> (or B<--nosubmit>).
+In addition, the common options B<--quiet> (or B<--noquiet>) and
+B<--debug> (or B<--nodebug>) are used.
 
 =item B<submission>
 
@@ -273,6 +274,14 @@ Submit an XML file to ENA.
 
 The XML submission file is specified by the B<--file=C<XXX>> option and
 any additional XML file is added to the end of the command line.
+
+The submission XML file will be examined in order to figure out what the
+other XML files are and a message will be displayed with a confirmation
+of the submission (unless the B<--quiet> option is used).
+
+Options used: B<--config>, B<--file>, B<--test> (or B<--notest>) and
+B<--submit> (or B<--nosubmit>).  In addition, the common options
+B<--quiet> (or B<--noquiet>) and B<--debug> (or B<--nodebug>) are used.
 
 =back
 
@@ -302,12 +311,14 @@ Display full help text, and exit.
 
 =item B<--quiet>
 
-Be quiet. Only error messages will be displayed.
+Be quiet. Only error messages will be displayed.  This option may be
+negated using B<--noquiet> (which is the default).
 
 =item B<--submit> or B<-s>
 
 Make a submission over the network.  With B<--nosubmit>, no network
-connection to ENA will be made.  The default is to make a sumbission.
+connection to ENA will be made.  The default is to make a network
+connection.
 
 =item B<--test> or B<-t>
 
