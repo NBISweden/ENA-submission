@@ -56,7 +56,7 @@ if ($opt_help) {
 }
 
 if ( !defined($opt_action) ) {
-    pod2usage( { -message => '!!> Missing --action',
+    pod2usage( { -message => '!!> Missing --action or --help',
                  -verbose => 0,
                  -exitval => 1 } );
 }
@@ -209,7 +209,8 @@ submit.pl - A script that handles submission of data to ENA at EBI.
 
 =head1 SYNOPSIS
 
-    ./submit.pl --action="action" [other options (see below)]
+    ./submit.pl [ --nodebug ] [ --quiet ] \
+        --action="action" [other options (see below)]
 
     ./submit.pl --help
 
@@ -222,12 +223,13 @@ The B<upload> action is for uploding data files.
     ./submit.pl --action=upload \
         --config=XXX --file=XXX [ --nosubmit ]
 
-=head3 "submit"
+=head3 "submission"
 
-The B<submit> action is for submitting XML files.
+The B<submission> action is for submitting XML files.
 
-    ./submit.pl --action=submit \
-        --config=XXX --file=XXX [ --nosubmit ] [ further XML files ]
+    ./submit.pl --action=submission \
+        --config=XXX --file=XXX \
+        [ --notest ] [ --nosubmit ] [ further XML files ]
 
 =head1 OPTIONS
 
@@ -248,7 +250,7 @@ made of the data file format or its integrity by this script.
 The data file is specified by the B<--file=C<XXX>> option.
 
 The MD5 digest (checksum) of the file is written to C<B<XXX>.md5> and
-both the data and digest is submitted to the ENA FTP server.
+both the data and digest is uploaded to the ENA FTP server.
 
 The MD5 digest is also added to a "manifest file" called C<manifest.all>
 in the same directory as the data file.  It is assumed that all data
@@ -265,7 +267,7 @@ for each file, maybe like this (for B<sh>-compatible shells):
 Options used: B<--config>, B<--file>, and either B<--submit> or
 B<--nosubmit> (B<--submit> is the default).
 
-=item B<submit>
+=item B<submission>
 
 Submit an XML file to ENA.
 
@@ -292,7 +294,7 @@ Display various debug output.  This is the default during development.
 
 The data file to upload with the B<upload> action.
 
-The submission XML to use with the B<submit> action.
+The submission XML to use with the B<submission> action.
 
 =item B<--help> or B<-h>
 
@@ -309,17 +311,9 @@ connection to ENA will be made.  The default is to make a sumbission.
 
 =item B<--test> or B<-t>
 
-When submitting XML, submit only to the ENA test server, not to the ENA
-production server.  This switch is enabled by default and my be negated
-using the B<--notest> switch.
-
-=item B<--xmldir> or B<-x>
-
-The directory containing the following XML files:
-
-    submission.xml
-
-    #TODO: Add more.
+When submitting XML using the B<submission> action, submit only to the
+ENA test server, not to the ENA production server.  This switch is
+enabled by default and my be negated using the B<--notest> switch.
 
 =back
 
