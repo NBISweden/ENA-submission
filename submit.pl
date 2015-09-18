@@ -8,6 +8,7 @@ use strict;
 use warnings;
 
 use Carp;
+use Data::Dumper;    # for debugging only
 use Config::Simple;
 use Digest::MD5::File qw( file_md5_hex );
 use File::Spec::Functions qw( splitpath catfile );
@@ -15,7 +16,7 @@ use Getopt::Long;
 use IO::File;
 use Net::FTP;
 use Pod::Usage;
-#notyet use XML::Simple;
+use XML::Simple qw( :strict );
 
 my $ENA_TEST_URL =
   'https://www-test.ebi.ac.uk/ena/submit/drop-box/submit/?';
@@ -33,7 +34,6 @@ my $opt_help   = 0;
 my $opt_quiet  = 0;
 my $opt_submit = 1;
 my $opt_test   = 1;
-my $opt_xmldir;
 
 if ( !GetOptions( "action|a=s" => \$opt_action,
                   "config|c=s" => \$opt_config,
@@ -42,8 +42,7 @@ if ( !GetOptions( "action|a=s" => \$opt_action,
                   "help|h!"    => \$opt_help,
                   "quiet!"     => \$opt_quiet,
                   "submit|s!"  => \$opt_submit,
-                  "test|t!"    => \$opt_test,
-                  "xmldir|x=s" => \$opt_xmldir, ) )
+                  "test|t!"    => \$opt_test, ) )
 {
     pod2usage( { -message => '!!> Failed to parse command line',
                  -verbose => 0,
@@ -75,6 +74,23 @@ if ( $opt_action eq 'upload' ) {
     }
 
     action_upload();
+}
+elsif ( $opt_action eq 'submission' ) {
+    if ( !( defined($opt_file) && defined($opt_config) ) ) {
+        pod2usage(
+               { -message => '!!> Need at least --config and --file ' .
+                   'for action "submission"',
+                 -verbose => 0,
+                 -exitval => 1 } );
+    }
+
+    action_submission();
+}
+else {
+    pod2usage( { -message =>
+                   sprintf( "!!> Unknown action '%s'", $opt_action ),
+                 -verbose => 0,
+                 -exitval => 1 } );
 }
 
 sub action_upload
@@ -183,6 +199,83 @@ sub action_upload
                "to ENA FTP server\n" );
     }
 } ## end sub action_upload
+
+sub action_submission
+{
+    #-------------------------------------------------------------------
+    # ACTION = "submission"
+    #-------------------------------------------------------------------
+
+    #
+    # Step 1: Collect all file names from the end of the command line.
+    #
+
+    my %xml_file;
+
+    foreach my $argv_file (@ARGV) {
+        my $file = ( splitpath($argv_file) )[2];
+        $xml_file{$file} = $argv_file;
+    }
+
+    #
+    # Step 2: Read the submission XML file to figure out what other
+    # files to expect on the command line.
+    #
+
+    if ( !-f $opt_file ) {
+        printf( "!!> Error: The XML submission file '%s' " .
+                  "was not found\n",
+                $opt_file );
+        exit(1);
+    }
+
+    my $submission_xml = XMLin( $opt_file,
+                                ForceArray => ['ACTION'],
+                                KeyAttr    => undef,
+                                GroupTags  => { 'ACTIONS' => 'ACTION' }
+    );
+
+    my $error = 0;
+
+    foreach my $action ( @{ $submission_xml->{'ACTIONS'} } ) {
+        foreach my $action_name ( keys( %{$action} ) ) {
+
+            if ( exists( $action->{$action_name}{'source'} ) ) {
+                my $source_file = $action->{$action_name}{'source'};
+
+                if ( !exists( $xml_file{$source_file} ) ) {
+                    printf( "!!> Error: XML file '%s' " .
+                              "referenced by submission XML " .
+                              "was not given on command line\n",
+                            $source_file );
+                    $error = 1;
+                }
+                else {
+                    if ( !$opt_quiet ) {
+                        printf( "==> Submission XML will %s '%s'\n",
+                                $action_name, $source_file );
+                    }
+
+                    delete($xml_file{$source_file});
+                }
+
+            }
+
+        }
+    }
+
+    foreach my $argv_file ( keys(%xml_file) ) {
+        printf( "!!> Warning: File '%s' ('%s') " .
+                  "given on command line " .
+                  "is not mentioned by submission XML (ignoring)\n",
+                $argv_file, $xml_file{$argv_file} );
+    }
+
+    if ($error) { exit 1 }
+
+    print Dumper($submission_xml);
+
+} ## end sub action_submission
 
 sub get_userpass
 {
