@@ -8,23 +8,27 @@ use strict;
 use warnings;
 
 use Carp;
-use Data::Dumper;    # for debugging only
 use Config::Simple;
+use Data::Dumper;    # for debugging only
 use Digest::MD5::File qw( file_md5_hex );
 use File::Spec::Functions qw( splitpath catfile );
 use Getopt::Long;
+use HTTP::Request::Common qw( POST );
 use IO::File;
+use LWP::UserAgent;
 use Net::FTP;
 use Pod::Usage;
 use XML::Simple qw( :strict );
 
+# These are global variables
+#
 my $ENA_TEST_URL =
-  'https://www-test.ebi.ac.uk/ena/submit/drop-box/submit/?';
+  'https://www-test.ebi.ac.uk/ena/submit/drop-box/submit/';
 my $ENA_PRODUCTION_URL =
-  'https://www.ebi.ac.uk/ena/submit/drop-box/submit/?';
+  'https://www.ebi.ac.uk/ena/submit/drop-box/submit/';
 my $ENA_WEBIN_FTP = 'webin.ebi.ac.uk';
 
-# All $opt_ variables are global.
+# All $opt_ variables are global too
 #
 my $opt_action;
 my $opt_config;
@@ -214,7 +218,7 @@ sub action_submission
 
     foreach my $argv_file (@ARGV) {
         my $file = ( splitpath($argv_file) )[2];
-        $xml_file{$file} = $argv_file;
+        $xml_file{$file}{'file'} = $argv_file;
     }
 
     #
@@ -235,45 +239,106 @@ sub action_submission
                                 GroupTags  => { 'ACTIONS' => 'ACTION' }
     );
 
+    my %schema_file;
     my $error = 0;
+
+    ##print Dumper($submission_xml);    # DEBUG
 
     foreach my $action ( @{ $submission_xml->{'ACTIONS'} } ) {
         foreach my $action_name ( keys( %{$action} ) ) {
 
             if ( exists( $action->{$action_name}{'source'} ) ) {
                 my $source_file = $action->{$action_name}{'source'};
+                my $source_schema =
+                  uc( $action->{$action_name}{'schema'} );
 
                 if ( !exists( $xml_file{$source_file} ) ) {
                     printf( "!!> Error: XML file '%s' " .
                               "referenced by submission XML " .
-                              "was not given on command line\n",
+                              "was not available on command line\n",
                             $source_file );
                     $error = 1;
                 }
                 else {
                     if ( !$opt_quiet ) {
-                        printf( "==> Submission XML will %s '%s'\n",
-                                $action_name, $source_file );
+                        printf( "==> Submission XML will %s '%s' " .
+                                  "(%s schema)\n",
+                                $action_name, $source_file,
+                                $source_schema );
                     }
 
-                    delete($xml_file{$source_file});
+                    $schema_file{$source_schema} =
+                      $xml_file{$source_file}{'file'};
+
+                    $xml_file{$source_file}{'available'} = 1;
                 }
 
-            }
+            } ## end if ( exists( $action->...))
 
+        } ## end foreach my $action_name ( keys...)
+    } ## end foreach my $action ( @{ $submission_xml...})
+
+    foreach my $file ( keys(%xml_file) ) {
+        if ( !exists( $xml_file{$file}{'available'} ) ) {
+            printf( "!!> Warning: File '%s' ('%s') " .
+                      "given on command line " .
+                      "is not mentioned by submission XML (ignoring)\n",
+                    $file, $xml_file{$file}{'file'} );
         }
     }
 
-    foreach my $argv_file ( keys(%xml_file) ) {
-        printf( "!!> Warning: File '%s' ('%s') " .
-                  "given on command line " .
-                  "is not mentioned by submission XML (ignoring)\n",
-                $argv_file, $xml_file{$argv_file} );
+    $schema_file{'SUBMISSION'} = $opt_file;
+
+    if ($error) {
+        exit 1;
     }
 
-    if ($error) { exit 1 }
+    if ( !$opt_submit ) { return }
 
-    print Dumper($submission_xml);
+    #
+    # Step 3: Make submission
+    #
+
+    $ENV{'HTTPS_DEBUG'} = $opt_debug;
+
+    # To get around "certificate verify failed" (error 500)
+    #
+    $ENV{'PERL_LWP_SSL_VERIFY_HOSTNAME'} = 0;
+    IO::Socket::SSL::set_ctx_defaults( SSL_verifycn_scheme => 'www',
+                                       SSL_verify_mode     => 0, );
+
+    my $ua = LWP::UserAgent->new();
+    $ua->show_progress($opt_debug);
+    $ua->default_header(
+               'Accept-Encoding' => scalar HTTP::Message::decodable() );
+
+    my $url;
+    if ($opt_test) {
+        $url = $ENA_TEST_URL;
+    }
+    else {
+        $url = $ENA_PRODUCTION_URL;
+    }
+
+    my ( $username, $password ) = get_userpass();
+
+    $url =
+      sprintf( "%s?auth=ENA%%20%s%%20%s", $url, $username, $password );
+
+    my $response =
+      $ua->simple_request( POST $url,
+                           Content_Type => 'form-data',
+                           Content      => [
+                                        map { [ $schema_file{$_}, $_ ] }
+                                          keys(%schema_file) ] );
+
+    if ( $response->is_success() ) {
+        print $response->decoded_content();    # or whatever
+        die Dumper($response);
+    }
+    else {
+        die Dumper($response);
+    }
 
 } ## end sub action_submission
 
