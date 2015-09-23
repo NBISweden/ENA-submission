@@ -108,7 +108,7 @@ sub action_upload
     #
 
     if ( !-f $opt_file ) {
-        printf( "!!> Error: The data file '%s' was not found\n",
+        printf( "!!> ERROR: The data file '%s' was not found\n",
                 $opt_file );
         exit(1);
     }
@@ -146,7 +146,7 @@ sub action_upload
             $manifest{$file} = $file_digest;
 
             if ( !-f catfile( $bam_path, $file ) ) {
-                printf( "!!> Warning: Can not find data file '%s' " .
+                printf( "!!> WARNING: Can not find data file '%s' " .
                           "listed in manifest file '%s'\n",
                         catfile( $bam_path, $file ), $manifest_file );
             }
@@ -227,7 +227,7 @@ sub action_submission
     #
 
     if ( !-f $opt_file ) {
-        printf( "!!> Error: The XML submission file '%s' " .
+        printf( "!!> ERROR: The XML submission file '%s' " .
                   "was not found\n",
                 $opt_file );
         exit(1);
@@ -253,7 +253,7 @@ sub action_submission
                   uc( $action->{$action_name}{'schema'} );
 
                 if ( !exists( $xml_file{$source_file} ) ) {
-                    printf( "!!> Error: XML file '%s' " .
+                    printf( "!!> ERROR: XML file '%s' " .
                               "referenced by submission XML " .
                               "was not available on command line\n",
                             $source_file );
@@ -280,7 +280,7 @@ sub action_submission
 
     foreach my $file ( keys(%xml_file) ) {
         if ( !exists( $xml_file{$file}{'available'} ) ) {
-            printf( "!!> Warning: File '%s' ('%s') " .
+            printf( "!!> WARNING: File '%s' ('%s') " .
                       "given on command line " .
                       "is not mentioned by submission XML (ignoring)\n",
                     $file, $xml_file{$file}{'file'} );
@@ -323,32 +323,40 @@ sub action_submission
     $url =
       sprintf( "%s?auth=ENA%%20%s%%20%s", $url, $username, $password );
 
-    my $request = POST(
-        $url,
-        Content_Type => 'form-data',
-        Content      => [
-            'SUBMISSION'=>[ $opt_file],
-            map {
-                $schema_file{$_}=>[ $schema_file{$_} ]
-              }
-              keys(%schema_file) ] );
+    my $request = POST( $url,
+                        Content_Type => 'form-data',
+                        Content      => [
+                                     'SUBMISSION' => [$opt_file],
+                                     map { $_ => [ $schema_file{$_} ] }
+                                       keys(%schema_file) ] );
+
+    ##print Dumper($request);    # DEBUG
 
     my $response = $ua->simple_request($request);
 
-    if ( $response->is_success() ) {
-        print $response->decoded_content();    # or whatever
-        die Dumper($response);
+    ##print Dumper($response);    # DEBUG
+
+    if ( !$response->is_success() ) {
+        printf( "!!> ERROR: HTTPS request failed: %s\n",
+                $response->as_string() );
+        exit(1);
     }
-    else {
-        die Dumper($response);
+    elsif ( !$opt_quiet ) {
+        print("==> HTTPS request successful\n");
     }
+
+    my $response_xml = XMLin( $response->decoded_content(),
+                              ForceArray => undef,
+                              KeyAttr    => undef );
+
+    print Dumper($response_xml);
 
 } ## end sub action_submission
 
 sub get_userpass
 {
     if ( !-f $opt_config ) {
-        printf( "!!> Error: The specified configuration file '%s' " .
+        printf( "!!> ERROR: The specified configuration file '%s' " .
                   "was not found\n",
                 $opt_config );
         exit(1);
