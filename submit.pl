@@ -349,7 +349,16 @@ sub action_submission
                               ForceArray => undef,
                               KeyAttr    => undef );
 
-    print Dumper($response_xml);
+    ##print Dumper($response_xml);    # DEBUG
+
+    if ( $response_xml->{'success'} eq 'false' ) {
+        printf( "!!> ERROR: Submission failed: %s\n",
+                $response_xml->{'MESSAGES'}{'ERROR'} );
+        exit(1);
+    }
+
+    # TODO: Handle successful submission (probably just diplay info
+    #       (unless $opt_quiet))
 
 } ## end sub action_submission
 
