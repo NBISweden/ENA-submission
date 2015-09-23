@@ -287,8 +287,6 @@ sub action_submission
         }
     }
 
-    $schema_file{'SUBMISSION'} = $opt_file;
-
     if ($error) {
         exit 1;
     }
@@ -325,12 +323,17 @@ sub action_submission
     $url =
       sprintf( "%s?auth=ENA%%20%s%%20%s", $url, $username, $password );
 
-    my $response =
-      $ua->simple_request( POST $url,
-                           Content_Type => 'form-data',
-                           Content      => [
-                                        map { [ $schema_file{$_}, $_ ] }
-                                          keys(%schema_file) ] );
+    my $request = POST(
+        $url,
+        Content_Type => 'form-data',
+        Content      => [
+            'SUBMISSION'=>[ $opt_file],
+            map {
+                $schema_file{$_}=>[ $schema_file{$_} ]
+              }
+              keys(%schema_file) ] );
+
+    my $response = $ua->simple_request($request);
 
     if ( $response->is_success() ) {
         print $response->decoded_content();    # or whatever
