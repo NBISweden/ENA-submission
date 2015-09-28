@@ -79,7 +79,7 @@ if ( $opt_action eq 'upload' ) {
 
     action_upload();
 }
-elsif ( $opt_action eq 'submission' ) {
+elsif ( $opt_action eq 'submission' || $opt_action eq 'submit' ) {
     if ( !( defined($opt_file) && defined($opt_config) ) ) {
         pod2usage(
                { -message => '!!> Need at least --config and --file ' .
@@ -351,14 +351,32 @@ sub action_submission
 
     ##print Dumper($response_xml);    # DEBUG
 
-    if ( $response_xml->{'success'} eq 'false' ) {
-        printf( "!!> ERROR: Submission failed: %s\n",
-                $response_xml->{'MESSAGES'}{'ERROR'} );
-        exit(1);
+    if ( !$opt_quiet ) {
+        printf( "==> ENA says: %s\n",
+                $response_xml->{'MESSAGES'}{'INFO'} );
     }
 
-    # TODO: Handle successful submission (probably just diplay info
-    #       (unless $opt_quiet))
+    if ( $response_xml->{'success'} eq 'false' ) {
+        if ( ref( $response_xml->{'MESSAGES'}{'ERROR'} ) eq 'ARRAY' ) {
+            my $error_count = 0;
+            foreach my $error_message (
+                             @{ $response_xml->{'MESSAGES'}{'ERROR'} } )
+            {
+                printf( "!!> ERROR #%d: Submission failed: %s\n",
+                        ++$error_count, $error_message );
+            }
+        }
+        else {
+            printf( "!!> ERROR: Submission failed: %s\n",
+                    $response_xml->{'MESSAGES'}{'ERROR'} );
+        }
+        exit(1);
+    }
+    else {
+        if ( !$opt_quiet ) {
+            print("==> Success\n");
+        }
+    }
 
 } ## end sub action_submission
 
@@ -394,20 +412,26 @@ submit.pl - A script that handles submission of data to ENA at EBI.
 
 =head2 Actions
 
-=head3 "upload"
+=over 8
+
+=item B<upload>
 
 The B<upload> action is for uploding data files.
 
-    ./submit.pl --action=upload \
+    ./submit.pl [ --nodebug ] [ --quiet ] \
+        --action=upload \
         --config=XXX --file=XXX [ --nosubmit ]
 
-=head3 "submission"
+=item B<submission> or B<submit>
 
 The B<submission> action is for submitting XML files.
 
-    ./submit.pl --action=submission \
+    ./submit.pl [ --nodebug ] [ --quiet ] \
+        --action=submission \
         --config=XXX --file=XXX \
         [ --notest ] [ --nosubmit ] [ further XML files ]
+
+=back
 
 =head1 OPTIONS
 
@@ -446,7 +470,7 @@ Options used: B<--config>, B<--file> and B<--submit> (or B<--nosubmit>).
 In addition, the common options B<--quiet> (or B<--noquiet>) and
 B<--debug> (or B<--nodebug>) are used.
 
-=item B<submission>
+=item B<submission> or B<submit>
 
 Submit an XML file to ENA.
 
