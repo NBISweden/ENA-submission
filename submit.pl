@@ -64,7 +64,7 @@ if ( !defined($opt_action) ) {
                  -exitval => 1 } );
 }
 
-# Each action should test here for existance of each required option.
+# Each action should test here for existence of each required option.
 # Validation of the option values (e.g. checking that files exists etc.)
 # happens in the respective action subroutine.
 
@@ -129,7 +129,7 @@ sub action_upload
     # Step 2: Add the MD5 digest to the file "manifest.all" in the same
     # directory as the data file.  If this file exists, read it and
     # make sure each entry is unique before overwriting it with all tho
-    # original digests and the new addiional digest.
+    # original digests and the new additional digest.
     #
 
     my ( $bam_path, $bam_file ) = ( splitpath($opt_file) )[ 1, 2 ];
@@ -408,6 +408,7 @@ submit.pl - A script that handles submission of data to ENA at EBI.
     ./submit.pl [ --nodebug ] [ --quiet ] \
         --action="action" [other options (see below)]
 
+    # FOR FULL USAGE INFO:
     ./submit.pl --help
 
 =head2 Actions
@@ -416,7 +417,7 @@ submit.pl - A script that handles submission of data to ENA at EBI.
 
 =item B<upload>
 
-The B<upload> action is for uploding data files.
+The B<upload> action is for uploading data files.
 
     ./submit.pl [ --nodebug ] [ --quiet ] \
         --action=upload \
@@ -455,8 +456,9 @@ The MD5 digest (checksum) of the file is written to C<B<XXX>.md5> and
 both the data and digest is uploaded to the ENA FTP server.
 
 The MD5 digest is also added to a "manifest file" called C<manifest.all>
-in the same directory as the data file.  It is assumed that all data
-files resides in the one and same directory.
+in the same directory as the data file (it is assumed that all data
+files resides in the one and same directory).  This file is currently
+not used.
 
 When submitting multiple data files, this script should be invoked once
 for each file, maybe like this (for B<sh>-compatible shells):
