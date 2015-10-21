@@ -34,18 +34,18 @@ my $opt_action;
 my $opt_config;
 my $opt_debug = 1;
 my $opt_file;
-my $opt_help   = 0;
-my $opt_quiet  = 0;
-my $opt_submit = 1;
-my $opt_test   = 1;
+my $opt_help  = 0;
+my $opt_net   = 1;
+my $opt_quiet = 0;
+my $opt_test  = 1;
 
 if ( !GetOptions( "action|a=s" => \$opt_action,
                   "config|c=s" => \$opt_config,
                   "debug!"     => \$opt_debug,
                   "file|f=s"   => \$opt_file,
                   "help|h!"    => \$opt_help,
+                  "net!"       => \$opt_net,
                   "quiet!"     => \$opt_quiet,
-                  "submit|s!"  => \$opt_submit,
                   "test|t!"    => \$opt_test, ) )
 {
     pod2usage( { -message => '!!> Failed to parse command line',
@@ -167,7 +167,7 @@ sub action_upload
         printf( "==> Added MD5 digest to '%s'\n", $manifest_file );
     }
 
-    if ( !$opt_submit ) {
+    if ( !$opt_net ) {
         return;
     }
 
@@ -291,7 +291,7 @@ sub action_submission
         exit 1;
     }
 
-    if ( !$opt_submit ) { return }
+    if ( !$opt_net ) { return }
 
     #
     # Step 3: Make submission
@@ -421,7 +421,7 @@ The B<upload> action is for uploading data files.
 
     ./submit.pl [ --nodebug ] [ --quiet ] \
         --action=upload \
-        --config=XXX --file=XXX [ --nosubmit ]
+        --config=XXX --file=XXX [ --nonet ]
 
 =item B<submission> or B<submit>
 
@@ -430,7 +430,7 @@ The B<submission> action is for submitting XML files.
     ./submit.pl [ --nodebug ] [ --quiet ] \
         --action=submission \
         --config=XXX --file=XXX \
-        [ --notest ] [ --nosubmit ] [ further XML files ]
+        [ --notest ] [ --nonet ] [ further XML files ]
 
 =back
 
@@ -468,9 +468,9 @@ for each file, maybe like this (for B<sh>-compatible shells):
             --config=XXX --file="$bam"
     done
 
-Options used: B<--config>, B<--file> and B<--submit> (or B<--nosubmit>).
-In addition, the common options B<--quiet> (or B<--noquiet>) and
-B<--debug> (or B<--nodebug>) are used.
+Options used: B<--config>, B<--file> and B<--net> (or B<--nonet>).  In
+addition, the common options B<--quiet> (or B<--noquiet>) and B<--debug>
+(or B<--nodebug>) are used.
 
 =item B<submission> or B<submit>
 
@@ -484,8 +484,8 @@ other XML files are and a message will be displayed with a confirmation
 of the submission (unless the B<--quiet> option is used).
 
 Options used: B<--config>, B<--file>, B<--test> (or B<--notest>) and
-B<--submit> (or B<--nosubmit>).  In addition, the common options
-B<--quiet> (or B<--noquiet>) and B<--debug> (or B<--nodebug>) are used.
+B<--net> (or B<--nonet>).  In addition, the common options B<--quiet>
+(or B<--noquiet>) and B<--debug> (or B<--nodebug>) are used.
 
 =back
 
@@ -513,16 +513,16 @@ The submission XML to use with the B<submission> action.
 
 Display full help text, and exit.
 
+=item B<--net>
+
+Make a connection to ENA over the network.  With B<--nonet>, no network
+connection to ENA will be made.  The default is to make a network
+connection.
+
 =item B<--quiet>
 
 Be quiet. Only error messages will be displayed.  This option may be
 negated using B<--noquiet> (which is the default).
-
-=item B<--submit> or B<-s>
-
-Make a submission over the network.  With B<--nosubmit>, no network
-connection to ENA will be made.  The default is to make a network
-connection.
 
 =item B<--test> or B<-t>
 
