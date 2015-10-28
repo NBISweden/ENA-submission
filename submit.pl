@@ -40,15 +40,15 @@ my $opt_profile = 'default';
 my $opt_quiet   = 0;
 my $opt_test    = 1;
 
-if ( !GetOptions( "action|a=s" => \$opt_action,
-                  "config|c=s" => \$opt_config,
-                  "debug!"     => \$opt_debug,
-                  "file|f=s"   => \$opt_file,
-                  "help|h!"    => \$opt_help,
-                  "net!"       => \$opt_net,
-                  "profile|p=s"=> \$opt_profile,
-                  "quiet!"     => \$opt_quiet,
-                  "test|t!"    => \$opt_test, ) )
+if ( !GetOptions( "action|a=s"  => \$opt_action,
+                  "config|c=s"  => \$opt_config,
+                  "debug!"      => \$opt_debug,
+                  "file|f=s"    => \$opt_file,
+                  "help|h!"     => \$opt_help,
+                  "net!"        => \$opt_net,
+                  "profile|p=s" => \$opt_profile,
+                  "quiet!"      => \$opt_quiet,
+                  "test|t!"     => \$opt_test, ) )
 {
     pod2usage( { -message => '!!> Failed to parse command line',
                  -verbose => 0,
