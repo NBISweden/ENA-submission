@@ -31,13 +31,14 @@ my $ENA_WEBIN_FTP = 'webin.ebi.ac.uk';
 # All $opt_ variables are global too
 #
 my $opt_action;
-my $opt_config;
-my $opt_debug = 1;
+my $opt_config = 'submit.conf';
+my $opt_debug  = 1;
 my $opt_file;
-my $opt_help  = 0;
-my $opt_net   = 1;
-my $opt_quiet = 0;
-my $opt_test  = 1;
+my $opt_help    = 0;
+my $opt_net     = 1;
+my $opt_profile = 'default';
+my $opt_quiet   = 0;
+my $opt_test    = 1;
 
 if ( !GetOptions( "action|a=s" => \$opt_action,
                   "config|c=s" => \$opt_config,
@@ -45,6 +46,7 @@ if ( !GetOptions( "action|a=s" => \$opt_action,
                   "file|f=s"   => \$opt_file,
                   "help|h!"    => \$opt_help,
                   "net!"       => \$opt_net,
+                  "profile|p=s"=> \$opt_profile,
                   "quiet!"     => \$opt_quiet,
                   "test|t!"    => \$opt_test, ) )
 {
@@ -70,22 +72,20 @@ if ( !defined($opt_action) ) {
 
 if ( $opt_action eq 'upload' ) {
     if ( !( defined($opt_file) && defined($opt_config) ) ) {
-        pod2usage(
-               { -message => '!!> Need at least --config and --file ' .
-                   'for action "upload"',
-                 -verbose => 0,
-                 -exitval => 1 } );
+        pod2usage( { -message => '!!> Need at least --file ' .
+                       'for action "upload"',
+                     -verbose => 0,
+                     -exitval => 1 } );
     }
 
     action_upload();
 }
 elsif ( $opt_action eq 'submission' || $opt_action eq 'submit' ) {
     if ( !( defined($opt_file) && defined($opt_config) ) ) {
-        pod2usage(
-               { -message => '!!> Need at least --config and --file ' .
-                   'for action "submission"',
-                 -verbose => 0,
-                 -exitval => 1 } );
+        pod2usage( { -message => '!!> Need at least --file ' .
+                       'for action "submission"',
+                     -verbose => 0,
+                     -exitval => 1 } );
     }
 
     action_submission();
@@ -391,11 +391,31 @@ sub get_userpass
 
     my $config = Config::Simple->new($opt_config);
 
-    my $username = $config->param('username');
-    my $password = $config->param('password');
+    my $profile_block_name = sprintf( "profile:%s", $opt_profile );
+    my $profile = $config->param( -block => $profile_block_name );
+
+    ##print Dumper($profile);    # DEBUG
+
+    if ( scalar( keys( %{$profile} ) ) == 0 ) {
+        printf("!!> ERROR: Configuration profile '%s' ([profile:%s]) " .
+                 "is missing in '%s'\n",
+               $opt_profile, $opt_profile, $opt_config );
+        exit(1);
+    }
+    elsif ( !exists( $profile->{'username'} ) ||
+            !exists( $profile->{'password'} ) )
+    {
+        printf( "!!> ERROR: Missing username/password " .
+                  "for configuration profile '%s' in '%s'\n",
+                $opt_profile, $opt_config );
+        exit(1);
+    }
+
+    my $username = $profile->{'username'};
+    my $password = $profile->{'password'};
 
     return ( $username, $password );
-}
+} ## end sub get_userpass
 
 __END__
 
@@ -420,16 +440,16 @@ submit.pl - A script that handles submission of data to ENA at EBI.
 The B<upload> action is for uploading data files.
 
     ./submit.pl [ --nodebug ] [ --quiet ] \
-        --action=upload \
-        --config=XXX --file=XXX [ --nonet ]
+        [ --config=XXX ] [ --profile=XXX ] \
+        --action=upload --file=XXX [ --nonet ]
 
 =item B<submission> or B<submit>
 
 The B<submission> action is for submitting XML files.
 
     ./submit.pl [ --nodebug ] [ --quiet ] \
-        --action=submission \
-        --config=XXX --file=XXX \
+        [ --config=XXX ] [ --profile=XXX ] \
+        --action=submission --file=XXX \
         [ --notest ] [ --nonet ] [ further XML files ]
 
 =back
@@ -464,13 +484,12 @@ When submitting multiple data files, this script should be invoked once
 for each file, maybe like this (for B<sh>-compatible shells):
 
     for bam in *.bam; do
-        ./submit.pl --action=upload \
-            --config=XXX --file="$bam"
+        ./submit.pl --action=upload --file="$bam"
     done
 
-Options used: B<--config>, B<--file> and B<--net> (or B<--nonet>).  In
-addition, the common options B<--quiet> (or B<--noquiet>) and B<--debug>
-(or B<--nodebug>) are used.
+Options used: B<--config>, B<--profile>, B<--file> and B<--net>
+(or B<--nonet>). In addition, the common options B<--quiet> (or
+B<--noquiet>) and B<--debug> (or B<--nodebug>) are used.
 
 =item B<submission> or B<submit>
 
@@ -483,21 +502,31 @@ The submission XML file will be examined in order to figure out what the
 other XML files are and a message will be displayed with a confirmation
 of the submission (unless the B<--quiet> option is used).
 
-Options used: B<--config>, B<--file>, B<--test> (or B<--notest>) and
-B<--net> (or B<--nonet>).  In addition, the common options B<--quiet>
-(or B<--noquiet>) and B<--debug> (or B<--nodebug>) are used.
+Options used: B<--config>, B<--profile>, B<--file>, B<--test> (or
+B<--notest>) and B<--net> (or B<--nonet>). In addition, the common
+options B<--quiet> (or B<--noquiet>) and B<--debug> (or B<--nodebug>)
+are used.
 
 =back
 
 =item B<--config> or B<-c>
 
 A configuration file that contains the information neccesary to make a
-submission to the ENA (your "Webin" user name and password).
+submission to the ENA (your "Webin" username and password).
 
 Example configuration file:
 
+    [profile:default]
     username    =   "my_username"
-    password    =   "myPASSword$$$"
+    password    =   "my_PASSword$$$"
+
+    [profile:otherperson]
+    username    =   "their_username"
+    password    =   "their_PaSSW0rd@#"
+
+Use the B<--profile> option to pick any non-default profile.
+
+A file called C<submit.conf> will be used if this option is not used.
 
 =item B<--debug>
 
@@ -519,6 +548,15 @@ Make a connection to ENA over the network.  With B<--nonet>, no network
 connection to ENA will be made.  The default is to make a network
 connection.
 
+=item B<--profile> or B<-p>
+
+Used to pick a specific profile section from the configuration file
+(see B<--config>). For example, to use the username and password for
+the C<[profile:myname]> section, use C<B<--profile>=myname> or C<B<-p>
+myname>.
+
+The profile called C<default> will be used if this option is not used.
+
 =item B<--quiet>
 
 Be quiet. Only error messages will be displayed.  This option may be
@@ -527,8 +565,8 @@ negated using B<--noquiet> (which is the default).
 =item B<--test> or B<-t>
 
 When submitting XML using the B<submission> action, submit only to the
-ENA test server, not to the ENA production server.  This switch is
-enabled by default and my be negated using the B<--notest> switch.
+ENA test server, not to the ENA production server.  This option is
+enabled by default and my be negated using the B<--notest> option.
 
 =back
 
