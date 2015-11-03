@@ -30,25 +30,25 @@ my $ENA_WEBIN_FTP = 'webin.ebi.ac.uk';
 
 # All $opt_ variables are global too
 #
-my $opt_action;
-my $opt_config = 'submit.conf';
-my $opt_debug  = 1;
-my $opt_file;
+my @opt_action;
+my $opt_config  = 'submit.conf';
+my $opt_debug   = 1;
 my $opt_help    = 0;
 my $opt_net     = 1;
 my $opt_profile = 'default';
 my $opt_quiet   = 0;
 my $opt_test    = 1;
+my $opt_upload  = 0;
 
-if ( !GetOptions( "action|a=s"  => \$opt_action,
+if ( !GetOptions( "action|a=s"  => \@opt_action,
                   "config|c=s"  => \$opt_config,
                   "debug!"      => \$opt_debug,
-                  "file|f=s"    => \$opt_file,
                   "help|h!"     => \$opt_help,
                   "net!"        => \$opt_net,
                   "profile|p=s" => \$opt_profile,
                   "quiet!"      => \$opt_quiet,
-                  "test|t!"     => \$opt_test, ) )
+                  "test|t!"     => \$opt_test,
+                  "upload|u!"   => \$opt_upload,)) {
 {
     pod2usage( { -message => '!!> Failed to parse command line',
                  -verbose => 0,
@@ -60,18 +60,12 @@ if ($opt_help) {
                  -exitval => 0 } );
 }
 
-if ( !defined($opt_action) ) {
-    pod2usage( { -message => '!!> Missing --action or --help',
-                 -verbose => 0,
-                 -exitval => 1 } );
-}
-
 # Each action should test here for existence of each required option.
 # Validation of the option values (e.g. checking that files exists etc.)
 # happens in the respective action subroutine.
 
-if ( $opt_action eq 'upload' ) {
-    if ( !( defined($opt_file) && defined($opt_config) ) ) {
+if ($opt_upload) {
+    if ( !defined($opt_file) ) {
         pod2usage( { -message => '!!> Need at least --file ' .
                        'for action "upload"',
                      -verbose => 0,
@@ -80,6 +74,32 @@ if ( $opt_action eq 'upload' ) {
 
     action_upload();
 }
+# The remaining actions are "XML actions":
+#
+#   ADD:        "Add an object to the archive."
+#
+#   MODIFY:     "Modify an object in the archive."
+#
+#   CANCEL:     "Cancel an object which has not been made public.
+#                Cancelled objects will not be made public."
+#
+#   SUPRESS:    "Suppress an object which has been made public.
+#                Suppressed data will remain accessible by accession
+#                number."
+#
+#   HOLD:       "Make the object public only when the hold date
+#                expires."
+#
+#   RELEASE:    "The object will be released immediately to public."
+#
+#   PROTECT:    "This action is required for data submitted to European
+#                Genome-Phenome Archive (EGA)."
+#
+#   VALIDATE:   "Validates the submitted XMLs without actually
+#                submitting them."
+#
+# (ftp://ftp.sra.ebi.ac.uk/meta/xsd/latest/SRA.submission.xsd)
+#
 elsif ( $opt_action eq 'submission' || $opt_action eq 'submit' ) {
     if ( !( defined($opt_file) && defined($opt_config) ) ) {
         pod2usage( { -message => '!!> Need at least --file ' .
@@ -425,34 +445,28 @@ submit.pl - A script that handles submission of data to ENA at EBI.
 
 =head1 SYNOPSIS
 
-    ./submit.pl [ --nodebug ] [ --quiet ] \
-        --action="action" [other options (see below)]
+There are two main ways to invoke this script.  One is used for
+uploading data files, and the other is used for submitting XML.  The
+script will determine which of these is requested by looking for the
+B<--upload> option on the command line (used for uploading data).
 
-    # FOR FULL USAGE INFO:
-    ./submit.pl --help
+=head2 Uploading data to ENA
 
-=head2 Actions
+    ./submit.pl [ --nodebug ] [ --quiet ] [ --nonet ] \
+        --upload DATA_FILENAMES
 
-=over 8
+TODO: Implement uploading of multiple data files.
 
-=item B<upload>
+=head2 Submitting XML to ENA
 
-The B<upload> action is for uploading data files.
+    ./submit.pl [ --nodebug ] [ --quiet ] [ --nonet ] \
+        --action ACTION[=PARAMETER>] \
+        [ --action ACTION[=PARAMETER] ... ] \
+        [ XML_FILENAMES ]
 
-    ./submit.pl [ --nodebug ] [ --quiet ] \
-        [ --config=XXX ] [ --profile=XXX ] \
-        --action=upload --file=XXX [ --nonet ]
+TODO: Implement this stuff.
 
-=item B<submission> or B<submit>
-
-The B<submission> action is for submitting XML files.
-
-    ./submit.pl [ --nodebug ] [ --quiet ] \
-        [ --config=XXX ] [ --profile=XXX ] \
-        --action=submission --file=XXX \
-        [ --notest ] [ --nonet ] [ further XML files ]
-
-=back
+TODO: FIXME: Documentation below.
 
 =head1 OPTIONS
 
@@ -460,7 +474,13 @@ The B<submission> action is for submitting XML files.
 
 =item B<--action> or B<-a>
 
-The action to take.  This is one of the following:
+The action to take when submitting XML files to ENA.  This option may occur several times on the command line, but usually only once.  You may want to use, e.g.,
+
+    --action ADD --action HOLD=YYYY-MM-DD
+
+... to submit (ADD) and hold data until a particular date( see the B<HOLD>
+action below ) .
+
 
 =over 16
 
