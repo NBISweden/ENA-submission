@@ -48,7 +48,7 @@ if ( !GetOptions( "action|a=s"  => \@opt_action,
                   "profile|p=s" => \$opt_profile,
                   "quiet!"      => \$opt_quiet,
                   "test|t!"     => \$opt_test,
-                  "upload|u!"   => \$opt_upload,)) {
+                  "upload|u!"   => \$opt_upload, ) )
 {
     pod2usage( { -message => '!!> Failed to parse command line',
                  -verbose => 0,
@@ -402,6 +402,18 @@ sub action_submission
 
 sub get_userpass
 {
+    my ( $config_section, $missing_ok ) = @_;
+
+    my $default_username;
+    my $default_password;
+
+    if ( $config_section ne 'default' ) {
+        ( $default_username, $default_password ) =
+          get_userpass( 'default', 1 );
+    }
+
+    if ( !defined($missing_ok) ) { $missing_ok = 0 }
+
     if ( !-f $opt_config ) {
         printf( "!!> ERROR: The specified configuration file '%s' " .
                   "was not found\n",
@@ -411,28 +423,29 @@ sub get_userpass
 
     my $config = Config::Simple->new($opt_config);
 
-    my $profile_block_name = sprintf( "profile:%s", $opt_profile );
-    my $profile = $config->param( -block => $profile_block_name );
+    my $profile = $config->param( -block => $config_section );
 
     ##print Dumper($profile);    # DEBUG
 
-    if ( scalar( keys( %{$profile} ) ) == 0 ) {
-        printf("!!> ERROR: Configuration profile '%s' ([profile:%s]) " .
-                 "is missing in '%s'\n",
-               $opt_profile, $opt_profile, $opt_config );
-        exit(1);
-    }
-    elsif ( !exists( $profile->{'username'} ) ||
-            !exists( $profile->{'password'} ) )
-    {
-        printf( "!!> ERROR: Missing username/password " .
-                  "for configuration profile '%s' in '%s'\n",
-                $opt_profile, $opt_config );
-        exit(1);
+    if ( !$missing_ok ) {
+        if ( scalar( keys( %{$profile} ) ) == 0 ) {
+            printf( "!!> ERROR: Configuration profile '%s' " .
+                      "is missing in '%s'\n",
+                    $config_section, $opt_config );
+            exit(1);
+        }
+        elsif ( !exists( $profile->{'username'} ) ||
+                !exists( $profile->{'password'} ) )
+        {
+            printf( "!!> ERROR: Missing username/password " .
+                      "for configuration profile '%s' in '%s'\n",
+                    $config_section, $opt_config );
+            exit(1);
+        }
     }
 
-    my $username = $profile->{'username'};
-    my $password = $profile->{'password'};
+    my $username = $profile->{'username'} || $default_username;
+    my $password = $profile->{'password'} || $default_password;
 
     return ( $username, $password );
 } ## end sub get_userpass
@@ -474,60 +487,40 @@ TODO: FIXME: Documentation below.
 
 =item B<--action> or B<-a>
 
-The action to take when submitting XML files to ENA.  This option may occur several times on the command line, but usually only once.  You may want to use, e.g.,
+The action to take when submitting XML files to ENA.  This option may
+occur several times on the command line, but usually only once.  You may
+want to use, e.g.,
 
     --action ADD --action HOLD=YYYY-MM-DD
 
-... to submit (ADD) and hold data until a particular date( see the B<HOLD>
-action below ) .
+... to submit (ADD) and hold data until a particular date (see the
+B<HOLD> action below).
 
+=item B<--upload>
 
-=over 16
+Upload a single data file to ENA.  If this option is not present on the
+command line it is assumed that a set of XML files should be submitted.
 
-=item B<upload>
+The data file is a file in BAM or CRAM format or in whatever other file
+format ENA accepts.  No check is made of the data file format or its
+integrity by this script.
 
-Upload a single data file to ENA.  The data file is a file in BAM or
-CRAM format or in whatever other file format ENA accepts.  No check is
-made of the data file format or its integrity by this script.
+The data file is specified by adding its path to the end of the command
+line.
 
-The data file is specified by the B<--file=C<XXX>> option.
+The MD5 digests (checksums) of each of the data files are written to a
+corresponding C<.md5> file, and both the data and digests are uploaded
+to the ENA FTP server.
 
-The MD5 digest (checksum) of the file is written to C<B<XXX>.md5> and
-both the data and digest is uploaded to the ENA FTP server.
+[The MD5 digests are also added to a "manifest file" called
+C<manifest.all> in the same directory as the data files (it is assumed
+that all data files resides in the one and same directory).  This
+manifest file is currently not used.]
 
-The MD5 digest is also added to a "manifest file" called C<manifest.all>
-in the same directory as the data file (it is assumed that all data
-files resides in the one and same directory).  This file is currently
-not used.
-
-When submitting multiple data files, this script should be invoked once
-for each file, maybe like this (for B<sh>-compatible shells):
-
-    for bam in *.bam; do
-        ./submit.pl --action=upload --file="$bam"
-    done
-
-Options used: B<--config>, B<--profile>, B<--file> and B<--net>
-(or B<--nonet>). In addition, the common options B<--quiet> (or
+Options used: B<--config>, B<--profile>, and B<--net> (or
+B<--nonet>). In addition, the common options B<--quiet> (or
 B<--noquiet>) and B<--debug> (or B<--nodebug>) are used.
 
-=item B<submission> or B<submit>
-
-Submit an XML file to ENA.
-
-The XML submission file is specified by the B<--file=C<XXX>> option and
-any additional XML file is added to the end of the command line.
-
-The submission XML file will be examined in order to figure out what the
-other XML files are and a message will be displayed with a confirmation
-of the submission (unless the B<--quiet> option is used).
-
-Options used: B<--config>, B<--profile>, B<--file>, B<--test> (or
-B<--notest>) and B<--net> (or B<--nonet>). In addition, the common
-options B<--quiet> (or B<--noquiet>) and B<--debug> (or B<--nodebug>)
-are used.
-
-=back
 
 =item B<--config> or B<-c>
 
@@ -536,27 +529,37 @@ submission to the ENA (your "Webin" username and password).
 
 Example configuration file:
 
-    [profile:default]
+    [default]
     username    =   "my_username"
     password    =   "my_PASSword$$$"
 
-    [profile:otherperson]
+    [otherperson]
     username    =   "their_username"
     password    =   "their_PaSSW0rd@#"
 
-Use the B<--profile> option to pick any non-default profile.
+Use the B<--profile> option to pick any non-default profile.  All
+configuration settings not present in a specifit profile section will be
+copied from the C<default> section.
 
 A file called C<submit.conf> will be used if this option is not used.
+
+The following are the configuration setting that needs to be specified:
+
+=over 16
+
+=item B<username>
+
+ENA Webin account username.
+
+=item B<password>
+
+ENA Webin account password.
+
+=back
 
 =item B<--debug>
 
 Display various debug output.  This is the default during development.
-
-=item B<--file> or B<-f>
-
-The data file to upload with the B<upload> action.
-
-The submission XML to use with the B<submission> action.
 
 =item B<--help> or B<-h>
 
@@ -570,10 +573,9 @@ connection.
 
 =item B<--profile> or B<-p>
 
-Used to pick a specific profile section from the configuration file
-(see B<--config>). For example, to use the username and password for
-the C<[profile:myname]> section, use C<B<--profile>=myname> or C<B<-p>
-myname>.
+Used to pick a specific profile section from the configuration file (see
+B<--config>). For example, to use the username and password for the
+C<[myname]> section, use C<B<--profile>=myname> or C<B<-p> myname>.
 
 The profile called C<default> will be used if this option is not used.
 
