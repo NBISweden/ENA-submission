@@ -76,7 +76,7 @@ if ($opt_upload) {
 #   CANCEL:     "Cancel an object which has not been made public.
 #                Cancelled objects will not be made public."
 #
-#   SUPRESS:    "Suppress an object which has been made public.
+#   SUPPRESS:   "Suppress an object which has been made public.
 #                Suppressed data will remain accessible by accession
 #                number."
 #
@@ -416,6 +416,7 @@ sub get_config
     # Missing settings will cause an error.
     #
 
+    my @values;
     my @default_values;
 
     if ( $profile ne 'default' ) {
@@ -446,7 +447,9 @@ sub get_config
         if ( exists( $profile->{ $settings[$si] } ) ) {
             $values[$si] = $profile->{ $settings[$si] };
         }
-        else $values[$si] = $default_values[$si];
+        else {
+            $values[$si] = $default_values[$si];
+        }
     }
 
     if ( $profile ne 'default' ) {
@@ -483,8 +486,6 @@ B<--upload> option on the command line (used for uploading data).
     ./submit.pl [ --nodebug ] [ --quiet ] [ --nonet ] \
         --upload DATA_FILENAME [ DATA_FILENAME ... ]
 
-TODO: Implement uploading of multiple data files.
-
 =head2 Submitting XML to ENA
 
     ./submit.pl [ --nodebug ] [ --quiet ] [ --nonet ] \
@@ -494,7 +495,7 @@ TODO: Implement uploading of multiple data files.
 
 TODO: Implement this stuff.
 
-TODO: FIXME: Documentation below.
+FIXME: Documentation below.
 
 =head1 OPTIONS
 
@@ -510,6 +511,53 @@ want to use, e.g.,
 
 ... to submit (ADD) and hold data until a particular date (see the
 B<HOLD> action below).
+
+The following are the actions available, with descriptions found in
+L<ftp://ftp.sra.ebi.ac.uk/meta/xsd/latest/SRA.submission.xsd>.
+
+=over 12
+
+=item B<ADD>
+
+"Add an object to the archive."
+
+=item B<MODIFY>
+
+"Modify an object in the archive."
+
+=item B<CANCEL>
+
+"Cancel an object which has not been made public.  Cancelled objects
+will not be made public."
+
+
+=item B<SUPPRESS>
+
+"Suppress an object which has been made public.  Suppressed data will
+remain accessible by accession number."
+
+
+=item B<HOLD>
+
+"Make the object public only when the hold date expires."
+
+
+=item B<RELEASE>
+
+"The object will be released immediately to public."
+
+
+=item B<PROTECT>
+
+"This action is required for data submitted to European Genome-Phenome
+Archive (EGA)."
+
+
+=item B<VALIDATE>
+
+"Validates the submitted XMLs without actually submitting them."
+
+=back
 
 =item B<--upload>
 
