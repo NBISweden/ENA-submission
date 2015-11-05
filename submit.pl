@@ -466,16 +466,16 @@ B<--upload> option on the command line (used for uploading data).
 =head2 Uploading data to ENA
 
     ./submit.pl [ --nodebug ] [ --quiet ] [ --nonet ] \
-        --upload DATA_FILENAMES
+        --upload DATA_FILENAME [ DATA_FILENAME ... ]
 
 TODO: Implement uploading of multiple data files.
 
 =head2 Submitting XML to ENA
 
     ./submit.pl [ --nodebug ] [ --quiet ] [ --nonet ] \
-        --action ACTION[=PARAMETER>] \
+        --action ACTION[=PARAMETER] \
         [ --action ACTION[=PARAMETER] ... ] \
-        [ XML_FILENAMES ]
+        [ XML_FILENAME [ XML_FILENAME ... ] ]
 
 TODO: Implement this stuff.
 
