@@ -65,14 +65,7 @@ if ($opt_help) {
 # happens in the respective action subroutine.
 
 if ($opt_upload) {
-    if ( !defined($opt_file) ) {
-        pod2usage( { -message => '!!> Need at least --file ' .
-                       'for action "upload"',
-                     -verbose => 0,
-                     -exitval => 1 } );
-    }
-
-    action_upload();
+    do_data_upload(@ARGV);
 }
 # The remaining actions are "XML actions":
 #
@@ -117,75 +110,83 @@ else {
                  -exitval => 1 } );
 }
 
-sub action_upload
+sub do_data_upload
 {
-    #-------------------------------------------------------------------
-    # ACTION = "upload"
-    #-------------------------------------------------------------------
+    my (@data_files) = @_;
+
+    my $error = 0;
+    foreach my $data_file (@data_files) {
+        if ( !-f $data_file ) {
+            printf( "!!> ERROR: The data file '%s' was not found\n",
+                    $data_file );
+            $error = 1;
+        }
+    }
+    if ($error) { exit(1) }
 
     #
-    # Step 1: Calculate MD5 digest for the data file.
+    # Step 1: Calculate MD5 digest for each of the data files.
     #
 
-    if ( !-f $opt_file ) {
-        printf( "!!> ERROR: The data file '%s' was not found\n",
-                $opt_file );
-        exit(1);
+    foreach my $data_file (@data_files) {
+        my $digest = file_md5_hex($data_file);
+
+        my $md5_file = sprintf( "%s.md5", $data_file );
+        my $md5_out = IO::File->new( $md5_file, "w" );
+
+        $md5_out->print( $digest, "\n" );
+        $md5_out->close();
+
+        if ( !$opt_quiet ) {
+            printf( "==> Wrote MD5 digest to '%s'\n", $md5_file );
+        }
     }
 
-    my $digest = file_md5_hex($opt_file);
-
-    my $md5_file = sprintf( "%s.md5", $opt_file );
-    my $md5_out = IO::File->new( $md5_file, "w" );
-
-    $md5_out->print( $digest, "\n" );
-    $md5_out->close();
-
-    if ( !$opt_quiet ) {
-        printf( "==> Wrote MD5 digest to '%s'\n", $md5_file );
-    }
-
     #
-    # Step 2: Add the MD5 digest to the file "manifest.all" in the same
-    # directory as the data file.  If this file exists, read it and
-    # make sure each entry is unique before overwriting it with all tho
-    # original digests and the new additional digest.
+    # Step 2: Add the MD5 digests to the file "manifest.all" in the same
+    # directory as the data files.  If this file exists, read it and
+    # make sure each entry is unique before overwriting it with all the
+    # original digests and any new additional digests.
     #
 
-    my ( $bam_path, $bam_file ) = ( splitpath($opt_file) )[ 1, 2 ];
-    my $manifest_file = catfile( $bam_path, "manifest.all" );
+    foreach my $data_file (@data_files) {
+        my ( $bam_path, $bam_file ) = ( splitpath($data_file) )[ 1, 2 ];
+        my $manifest_file = catfile( $bam_path, "manifest.all" );
 
-    my %manifest = ( $bam_file => $digest );
+        my %manifest = ( $bam_file => $digest );
 
-    if ( -f $manifest_file ) {
-        my $manifest_in = IO::File->new( $manifest_file, "r" );
+        if ( -f $manifest_file ) {
+            my $manifest_in = IO::File->new( $manifest_file, "r" );
 
-        while ( my $line = $manifest_in->getline() ) {
-            chomp($line);
-            my ( $file, $file_digest ) = split( /\t/, $line );
-            $manifest{$file} = $file_digest;
+            while ( my $line = $manifest_in->getline() ) {
+                chomp($line);
+                my ( $file, $file_digest ) = split( /\t/, $line );
+                $manifest{$file} = $file_digest;
 
-            if ( !-f catfile( $bam_path, $file ) ) {
-                printf( "!!> WARNING: Can not find data file '%s' " .
-                          "listed in manifest file '%s'\n",
-                        catfile( $bam_path, $file ), $manifest_file );
+                if ( !-f catfile( $bam_path, $file ) ) {
+                    printf(
+                          "!!> WARNING: Can not find data file '%s' " .
+                            "listed in manifest file '%s'\n",
+                          catfile( $bam_path, $file ), $manifest_file );
+                }
             }
+
+            $manifest_in->close();
         }
 
-        $manifest_in->close();
-    }
+        my $manifest_out = IO::File->new( $manifest_file, "w" );
 
-    my $manifest_out = IO::File->new( $manifest_file, "w" );
+        foreach my $file ( sort( keys(%manifest) ) ) {
+            $manifest_out->printf( "%s\t%s\n", $file,
+                                   $manifest{$file} );
+        }
 
-    foreach my $file ( sort( keys(%manifest) ) ) {
-        $manifest_out->printf( "%s\t%s\n", $file, $manifest{$file} );
-    }
+        $manifest_out->close();
 
-    $manifest_out->close();
-
-    if ( !$opt_quiet ) {
-        printf( "==> Added MD5 digest to '%s'\n", $manifest_file );
-    }
+        if ( !$opt_quiet ) {
+            printf( "==> Added MD5 digest to '%s'\n", $manifest_file );
+        }
+    } ## end foreach my $data_file (@data_files)
 
     if ( !$opt_net ) {
         return;
@@ -196,7 +197,8 @@ sub action_upload
     # server.
     #
 
-    my ( $username, $password ) = get_userpass();
+    my ( $username, $password ) =
+      get_config( $opt_profile, 'username', 'password' );
 
     my $ftp = Net::FTP->new( $ENA_WEBIN_FTP, Debug => $opt_debug );
 
@@ -205,24 +207,27 @@ sub action_upload
       croak( sprintf( "Can not 'login' on ENA FTP server: %s",
                       $ftp->message() ) );
 
-    $ftp->put($opt_file)
-      or
-      croak( sprintf( "Can not 'put' data file onto ENA FTP server: %s",
+    foreach my $data_file (@data_files) {
+        $ftp->put($data_file)
+          or
+          croak(
+             sprintf( "Can not 'put' data file onto ENA FTP server: %s",
                       $ftp->message() ) );
 
-    $ftp->put( sprintf( "%s.md5", $opt_file ) )
-      or
-      croak( sprintf( "Can not 'put' data file MD5 digest " .
-                        "onto ENA FTP server: %s",
-                      $ftp->message() ) );
+        $ftp->put( sprintf( "%s.md5", $data_file ) )
+          or
+          croak( sprintf( "Can not 'put' data file MD5 digest " .
+                            "onto ENA FTP server: %s",
+                          $ftp->message() ) );
+    }
 
     $ftp->quit();
 
     if ( !$opt_quiet ) {
-        print( "==> Submitted data file and MD5 digest " .
+        print( "==> Submitted data file(s) and MD5 digest(s) " .
                "to ENA FTP server\n" );
     }
-} ## end sub action_upload
+} ## end sub do_data_upload
 
 sub action_submission
 {
@@ -400,19 +405,22 @@ sub action_submission
 
 } ## end sub action_submission
 
-sub get_userpass
+sub get_config
 {
-    my ( $config_section, $missing_ok ) = @_;
+    my ( $profile, @settings ) = @_;
 
-    my $default_username;
-    my $default_password;
+    #
+    # This routine is called to get settings from the configuration
+    # file.  Any requested settings not found in the specified profile
+    # will be filled in with values taken from the default profile.
+    # Missing settings will cause an error.
+    #
 
-    if ( $config_section ne 'default' ) {
-        ( $default_username, $default_password ) =
-          get_userpass( 'default', 1 );
+    my @default_values;
+
+    if ( $profile ne 'default' ) {
+        @default_values = get_config( 'default', @settings );
     }
-
-    if ( !defined($missing_ok) ) { $missing_ok = 0 }
 
     if ( !-f $opt_config ) {
         printf( "!!> ERROR: The specified configuration file '%s' " .
@@ -423,32 +431,39 @@ sub get_userpass
 
     my $config = Config::Simple->new($opt_config);
 
-    my $profile = $config->param( -block => $config_section );
+    my $profile_block = $config->param( -block => $profile );
 
-    ##print Dumper($profile);    # DEBUG
+    ##print Dumper($profile_block);    # DEBUG
 
-    if ( !$missing_ok ) {
-        if ( scalar( keys( %{$profile} ) ) == 0 ) {
-            printf( "!!> ERROR: Configuration profile '%s' " .
-                      "is missing in '%s'\n",
-                    $config_section, $opt_config );
-            exit(1);
-        }
-        elsif ( !exists( $profile->{'username'} ) ||
-                !exists( $profile->{'password'} ) )
-        {
-            printf( "!!> ERROR: Missing username/password " .
-                      "for configuration profile '%s' in '%s'\n",
-                    $config_section, $opt_config );
-            exit(1);
-        }
+    if ( scalar( keys( %{$profile_block} ) ) == 0 ) {
+        printf( "!!> ERROR: Configuration profile '%s' " .
+                  "is missing in '%s'\n",
+                $profile, $opt_config );
+        exit(1);
     }
 
-    my $username = $profile->{'username'} || $default_username;
-    my $password = $profile->{'password'} || $default_password;
+    for ( my $si = 0; $si < scalar(@settings); ++$si ) {
+        if ( exists( $profile->{ $settings[$si] } ) ) {
+            $values[$si] = $profile->{ $settings[$si] };
+        }
+        else $values[$si] = $default_values[$si];
+    }
 
-    return ( $username, $password );
-} ## end sub get_userpass
+    if ( $profile ne 'default' ) {
+        my $error = 0;
+        for ( my $si = 0; $si < scalar(@settings); ++$si ) {
+            if ( !defined( $values[$si] ) ) {
+                printf( "!!> ERROR: Unable to find setting '%s' " .
+                          "for profile '%s' in '%s'\n",
+                        $settings[$si], $profile, $opt_config );
+                $error = 1;
+            }
+        }
+        if ($error) { exit(1) }
+    }
+
+    return @values;
+} ## end sub get_config
 
 __END__
 
