@@ -90,6 +90,7 @@ if ($opt_upload) {
 # (ftp://ftp.sra.ebi.ac.uk/meta/xsd/latest/SRA.submission.xsd)
 #
 elsif ( scalar(@opt_action) > 0 ) {
+    do_submission(@ARGV);
 }
 else {
     pod2usage( { -message => '!!> Need either --upload or ' .
@@ -98,14 +99,8 @@ else {
                  -exitval => 1 } );
 }
 
-    action_submission();
-}
-else {
-    pod2usage( { -message =>
-                   sprintf( "!!> Unknown action '%s'", $opt_action ),
-                 -verbose => 0,
-                 -exitval => 1 } );
-}
+# END OF MAIN SCRIPT.
+# Subroutines follow.
 
 sub do_data_upload
 {
