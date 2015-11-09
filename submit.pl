@@ -89,13 +89,14 @@ if ($opt_upload) {
 #
 # (ftp://ftp.sra.ebi.ac.uk/meta/xsd/latest/SRA.submission.xsd)
 #
-elsif ( $opt_action eq 'submission' || $opt_action eq 'submit' ) {
-    if ( !( defined($opt_file) && defined($opt_config) ) ) {
-        pod2usage( { -message => '!!> Need at least --file ' .
-                       'for action "submission"',
-                     -verbose => 0,
-                     -exitval => 1 } );
-    }
+elsif ( scalar(@opt_action) > 0 ) {
+}
+else {
+    pod2usage( { -message => '!!> Need either --upload or ' .
+                   'at least one --action',
+                 -verbose => 0,
+                 -exitval => 1 } );
+}
 
     action_submission();
 }
