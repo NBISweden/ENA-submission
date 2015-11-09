@@ -539,6 +539,11 @@ remain accessible by accession number."
 
 "Make the object public only when the hold date expires."
 
+NOTE: THIS SCRIPT WILL AUTOMATICALLY ADD A B<HOLD> ACTION TO ALL
+SUBMISSIONS, WITH A DATE SET TWO YEARS INTO THE FUTURE.
+
+To release a data set for publication, use the B<RELEASE> action.
+
 =item B<RELEASE>
 
 "The object will be released immediately to public."
