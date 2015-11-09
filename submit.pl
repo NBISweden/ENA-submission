@@ -530,28 +530,23 @@ L<ftp://ftp.sra.ebi.ac.uk/meta/xsd/latest/SRA.submission.xsd>.
 "Cancel an object which has not been made public.  Cancelled objects
 will not be made public."
 
-
 =item B<SUPPRESS>
 
 "Suppress an object which has been made public.  Suppressed data will
 remain accessible by accession number."
 
-
 =item B<HOLD>
 
 "Make the object public only when the hold date expires."
-
 
 =item B<RELEASE>
 
 "The object will be released immediately to public."
 
-
 =item B<PROTECT>
 
 "This action is required for data submitted to European Genome-Phenome
 Archive (EGA)."
-
 
 =item B<VALIDATE>
 
