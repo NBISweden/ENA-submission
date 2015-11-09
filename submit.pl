@@ -175,11 +175,9 @@ sub do_data_upload
     }
 } ## end sub do_data_upload
 
-sub action_submission
+sub do_submission
 {
-    #-------------------------------------------------------------------
-    # ACTION = "submission"
-    #-------------------------------------------------------------------
+    my (@xml_files) = @_;
 
     #
     # Step 1: Collect all file names from the end of the command line.
@@ -187,10 +185,16 @@ sub action_submission
 
     my %xml_file;
 
-    foreach my $argv_file (@ARGV) {
-        my $file = ( splitpath($argv_file) )[2];
-        $xml_file{$file}{'file'} = $argv_file;
+    foreach my $file (@xml_files) {
+        my $file_basename = ( splitpath($file) )[2];
+        $xml_file{$file_basename}{'file'} = $file;
     }
+
+    # TODO: Create submission XML file using the XML files from
+    # %xml_file and the actions in @action.  Add HOLD action with two
+    # years hold date unless this is given by the user already, or
+    # action is "CANCEL" or "SUPPRESS".
+    #
 
     #
     # Step 2: Read the submission XML file to figure out what other
@@ -349,7 +353,7 @@ sub action_submission
         }
     }
 
-} ## end sub action_submission
+} ## end sub do_submission
 
 sub get_config
 {
@@ -438,10 +442,6 @@ B<--upload> option on the command line (used for uploading data).
         --action ACTION[=PARAMETER] \
         [ --action ACTION[=PARAMETER] ... ] \
         [ XML_FILENAME [ XML_FILENAME ... ] ]
-
-TODO: Implement this stuff.
-
-FIXME: Documentation below.
 
 =head1 OPTIONS
 
