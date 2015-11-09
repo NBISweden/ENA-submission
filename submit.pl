@@ -139,52 +139,6 @@ sub do_data_upload
         }
     }
 
-    #
-    # Step 2: Add the MD5 digests to the file "manifest.all" in the same
-    # directory as the data files.  If this file exists, read it and
-    # make sure each entry is unique before overwriting it with all the
-    # original digests and any new additional digests.
-    #
-
-    foreach my $data_file (@data_files) {
-        my ( $bam_path, $bam_file ) = ( splitpath($data_file) )[ 1, 2 ];
-        my $manifest_file = catfile( $bam_path, "manifest.all" );
-
-        my %manifest = ( $bam_file => $digest );
-
-        if ( -f $manifest_file ) {
-            my $manifest_in = IO::File->new( $manifest_file, "r" );
-
-            while ( my $line = $manifest_in->getline() ) {
-                chomp($line);
-                my ( $file, $file_digest ) = split( /\t/, $line );
-                $manifest{$file} = $file_digest;
-
-                if ( !-f catfile( $bam_path, $file ) ) {
-                    printf(
-                          "!!> WARNING: Can not find data file '%s' " .
-                            "listed in manifest file '%s'\n",
-                          catfile( $bam_path, $file ), $manifest_file );
-                }
-            }
-
-            $manifest_in->close();
-        }
-
-        my $manifest_out = IO::File->new( $manifest_file, "w" );
-
-        foreach my $file ( sort( keys(%manifest) ) ) {
-            $manifest_out->printf( "%s\t%s\n", $file,
-                                   $manifest{$file} );
-        }
-
-        $manifest_out->close();
-
-        if ( !$opt_quiet ) {
-            printf( "==> Added MD5 digest to '%s'\n", $manifest_file );
-        }
-    } ## end foreach my $data_file (@data_files)
-
     if ( !$opt_net ) {
         return;
     }
@@ -572,15 +526,9 @@ The MD5 digests (checksums) of each of the data files are written to a
 corresponding C<.md5> file, and both the data and digests are uploaded
 to the ENA FTP server.
 
-[The MD5 digests are also added to a "manifest file" called
-C<manifest.all> in the same directory as the data files (it is assumed
-that all data files resides in the one and same directory).  This
-manifest file is currently not used.]
-
 Options used: B<--config>, B<--profile>, and B<--net> (or
 B<--nonet>). In addition, the common options B<--quiet> (or
 B<--noquiet>) and B<--debug> (or B<--nodebug>) are used.
-
 
 =item B<--config> or B<-c>
 
