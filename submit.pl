@@ -60,10 +60,6 @@ if ($opt_help) {
                  -exitval => 0 } );
 }
 
-# Each action should test here for existence of each required option.
-# Validation of the option values (e.g. checking that files exists etc.)
-# happens in the respective action subroutine.
-
 if ($opt_upload) {
     do_data_upload(@ARGV);
 }
