@@ -194,77 +194,13 @@ sub do_submission
     # %xml_file and the actions in @action.  Add HOLD action with two
     # years hold date unless this is given by the user already, or
     # action is "CANCEL" or "SUPPRESS".
-    #
 
-    #
-    # Step 2: Read the submission XML file to figure out what other
-    # files to expect on the command line.
-    #
+    my %schema_file_map;    # TODO: %schema_file_map should contain
+                            # mappings from names of XML schemas to
+                            # filenames (@xml_files).
 
-    if ( !-f $opt_file ) {
-        printf( "!!> ERROR: The XML submission file '%s' " .
-                  "was not found\n",
-                $opt_file );
-        exit(1);
-    }
-
-    my $submission_xml = XMLin( $opt_file,
-                                ForceArray => ['ACTION'],
-                                KeyAttr    => undef,
-                                GroupTags  => { 'ACTIONS' => 'ACTION' }
-    );
-
-    my %schema_file;
-    my $error = 0;
-
-    ##print Dumper($submission_xml);    # DEBUG
-
-    foreach my $action ( @{ $submission_xml->{'ACTIONS'} } ) {
-        foreach my $action_name ( keys( %{$action} ) ) {
-
-            if ( exists( $action->{$action_name}{'source'} ) ) {
-                my $source_file = $action->{$action_name}{'source'};
-                my $source_schema =
-                  uc( $action->{$action_name}{'schema'} );
-
-                if ( !exists( $xml_file{$source_file} ) ) {
-                    printf( "!!> ERROR: XML file '%s' " .
-                              "referenced by submission XML " .
-                              "was not available on command line\n",
-                            $source_file );
-                    $error = 1;
-                }
-                else {
-                    if ( !$opt_quiet ) {
-                        printf( "==> Submission XML will %s '%s' " .
-                                  "(%s schema)\n",
-                                $action_name, $source_file,
-                                $source_schema );
-                    }
-
-                    $schema_file{$source_schema} =
-                      $xml_file{$source_file}{'file'};
-
-                    $xml_file{$source_file}{'available'} = 1;
-                }
-
-            } ## end if ( exists( $action->...))
-
-        } ## end foreach my $action_name ( keys...)
-    } ## end foreach my $action ( @{ $submission_xml...})
-
-    foreach my $file ( keys(%xml_file) ) {
-        if ( !exists( $xml_file{$file}{'available'} ) ) {
-            printf( "!!> WARNING: File '%s' ('%s') " .
-                      "given on command line " .
-                      "is not mentioned by submission XML (ignoring)\n",
-                    $file, $xml_file{$file}{'file'} );
-        }
-    }
-
-    if ($error) {
-        exit 1;
-    }
+    my $submission_xml_file;
+    # TODO: Write submission XML to file $submission_xml_file here.
 
     if ( !$opt_net ) { return }
 
@@ -301,9 +237,9 @@ sub do_submission
     my $request = POST( $url,
                         Content_Type => 'form-data',
                         Content      => [
-                                     'SUBMISSION' => [$opt_file],
-                                     map { $_ => [ $schema_file{$_} ] }
-                                       keys(%schema_file) ] );
+                                 'SUBMISSION' => [$submission_xml_file],
+                                 map { $_ => [ $schema_file_map{$_} ] }
+                                   keys(%schema_file_map) ] );
 
     ##print Dumper($request);    # DEBUG
 
