@@ -195,6 +195,11 @@ sub do_submission
     # years hold date unless this is given by the user already, or
     # action is "CANCEL" or "SUPPRESS".
 
+    # The %submission_xml is decoded from
+    # "ftp://ftp.sra.ebi.ac.uk/meta/xsd/latest/SRA.submission.xsd".
+
+    my %submission_xml = ();
+
     my %schema_file_map;    # TODO: %schema_file_map should contain
                             # mappings from names of XML schemas to
                             # filenames (@xml_files).
