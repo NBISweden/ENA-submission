@@ -191,9 +191,7 @@ sub do_submission
     }
 
     # TODO: Create submission XML file using the XML files from
-    # %xml_file and the actions in @action.  Add HOLD action with two
-    # years hold date unless this is given by the user already, or
-    # action is "RELEASE", "CANCEL" or "SUPPRESS".
+    # %xml_file and the actions in @action.
 
     my %actions;
     foreach my $action_with_parameter (@opt_action) {
