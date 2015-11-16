@@ -195,6 +195,16 @@ sub do_submission
     # years hold date unless this is given by the user already, or
     # action is "CANCEL" or "SUPPRESS".
 
+    my %actions;
+    foreach my $action_with_parameter (@opt_action) {
+        my ( $action, $parameter ) =
+          split( /=/, $action_with_parameter );
+        $actions{ uc($action) } = $parameter;
+    }
+
+    print Dumper(\%actions);
+    die;
+
     # The %submission_xml is decoded from
     # "ftp://ftp.sra.ebi.ac.uk/meta/xsd/latest/SRA.submission.xsd".
 
