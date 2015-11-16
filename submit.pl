@@ -335,8 +335,8 @@ sub get_config
     }
 
     for ( my $si = 0; $si < scalar(@settings); ++$si ) {
-        if ( exists( $profile->{ $settings[$si] } ) ) {
-            $values[$si] = $profile->{ $settings[$si] };
+        if ( exists( $profile_block->{ $settings[$si] } ) ) {
+            $values[$si] = $profile_block->{ $settings[$si] };
         }
         else {
             $values[$si] = $default_values[$si];
