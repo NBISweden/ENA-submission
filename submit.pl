@@ -193,7 +193,7 @@ sub do_submission
     # TODO: Create submission XML file using the XML files from
     # %xml_file and the actions in @action.  Add HOLD action with two
     # years hold date unless this is given by the user already, or
-    # action is "CANCEL" or "SUPPRESS".
+    # action is "RELEASE", "CANCEL" or "SUPPRESS".
 
     my %actions;
     foreach my $action_with_parameter (@opt_action) {
@@ -202,8 +202,21 @@ sub do_submission
         $actions{ uc($action) } = $parameter;
     }
 
-    print Dumper(\%actions);
-    die;
+    if ( !exists( $actions{'HOLD'} ) ) {
+        if ( !exists( $actions{'RELEASE'} ) &&
+             !exists( $actions{'CANCEL'} ) &&
+             !exists( $actions{'SUPPRESS'} ) )
+        {
+            my ( $year, $month, $day ) =
+              ( gmtime( time() ) )[ 5, 4, 3 ];
+            $actions{'HOLD'} =
+              sprintf( "%4d-%02d-%02dZ",
+                       $year + 1902,
+                       $month + 1, $day );
+        }
+    }
+
+    die Dumper(\%actions);
 
     # The %submission_xml is decoded from
     # "ftp://ftp.sra.ebi.ac.uk/meta/xsd/latest/SRA.submission.xsd".
