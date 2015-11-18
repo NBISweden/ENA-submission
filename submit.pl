@@ -214,7 +214,7 @@ sub do_submission
         }
     }
 
-    die Dumper(\%actions);
+    ##print Dumper( \%actions );    # DEBUG
 
     # The %submission_xml is decoded from
     # "ftp://ftp.sra.ebi.ac.uk/meta/xsd/latest/SRA.submission.xsd".
@@ -224,6 +224,18 @@ sub do_submission
     my %schema_file_map;    # TODO: %schema_file_map should contain
                             # mappings from names of XML schemas to
                             # filenames (@xml_files).
+
+    foreach my $xml_file (@xml_files) {
+        # Read each XML file to figure out what type of XML it contains.
+        # Weed out any submission XML file.
+        my $xml =
+          XMLin( $xml_file, ForceArray => undef, KeyAttr => undef );
+        my @toplevel = keys( %{$xml} );
+        if ( scalar(@toplevel) == 1 ) {
+            $schema_xml_map{ $toplevel[0] } = $xml_file;
+        }
+    }
+
 
     my $submission_xml_file;
     # TODO: Write submission XML to file $submission_xml_file here.
