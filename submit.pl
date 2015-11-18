@@ -232,7 +232,7 @@ sub do_submission
           XMLin( $xml_file, ForceArray => undef, KeyAttr => undef );
         my @toplevel = keys( %{$xml} );
         if ( scalar(@toplevel) == 1 ) {
-            $schema_xml_map{ $toplevel[0] } = $xml_file;
+            $schema_file_map{ $toplevel[0] } = $xml_file;
         }
     }
 
