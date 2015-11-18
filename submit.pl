@@ -207,6 +207,7 @@ sub do_submission
         {
             my ( $year, $month, $day ) =
               ( gmtime( time() ) )[ 5, 4, 3 ];
+            # Set HOLD date to two years into the future.
             $actions{'HOLD'} =
               sprintf( "%4d-%02d-%02dZ",
                        $year + 1902,
@@ -216,15 +217,7 @@ sub do_submission
 
     ##print Dumper( \%actions );    # DEBUG
 
-    # The %submission_xml is decoded from
-    # "ftp://ftp.sra.ebi.ac.uk/meta/xsd/latest/SRA.submission.xsd".
-
-    my %submission_xml = ();
-
-    my %schema_file_map;    # TODO: %schema_file_map should contain
-                            # mappings from names of XML schemas to
-                            # filenames (@xml_files).
-
+    my %schema_file_map;
     foreach my $xml_file (@xml_files) {
         # Read each XML file to figure out what type of XML it contains.
         # Weed out any submission XML file.
@@ -234,8 +227,38 @@ sub do_submission
         if ( scalar(@toplevel) == 1 ) {
             $schema_file_map{ $toplevel[0] } = $xml_file;
         }
+        elsif ( !$opt_quiet ) {
+            printf( "!!> WARNING: Skipping XML file '%s'\n",
+                    $xml_file );
+        }
     }
 
+    # The %submission_xml is decoded from
+    # "ftp://ftp.sra.ebi.ac.uk/meta/xsd/latest/SRA.submission.xsd".
+
+    my %submission_xml = ();
+
+    print Dumper( \%actions, \%schema_file_map );    # DEBUG
+
+    foreach my $action ( keys(%actions) ) {
+        if ( $action ne 'HOLD' ) {
+            foreach my $schema ( keys(%schema_file_map) ) {
+                push( @{ $submission_xml{'ACTIONS'} },
+                      { 'ACTION' => {
+                              $action => {
+                                  'source' => $schema_file_map{$schema},
+                                  'schema' => lc($schema) } } } );
+            }
+        }
+    }
+    if ( exists( $actions{'HOLD'} ) ) {
+        push( @{ $submission_xml{'ACTIONS'} },
+              {  'ACTION' => {
+                       'HOLD' => { 'HoldUntilDate' => $actions{'HOLD'} }
+                 } } );
+    }
+
+    print Dumper( \%submission_xml );    # DEBUG
 
     my $submission_xml_file;
     # TODO: Write submission XML to file $submission_xml_file here.
