@@ -222,7 +222,10 @@ sub do_submission
         # Read each XML file to figure out what type of XML it contains.
         # Weed out any submission XML file.
         my $xml =
-          XMLin( $xml_file, ForceArray => undef, KeyAttr => undef );
+          XMLin( $xml_file,
+                 ForceArray => undef,
+                 NoAttr     => 1,
+                 KeyAttr    => '' );
         my @toplevel = keys( %{$xml} );
         if ( scalar(@toplevel) == 1 ) {
             $schema_file_map{ $toplevel[0] } = $xml_file;
@@ -238,27 +241,30 @@ sub do_submission
 
     my %submission_xml = ();
 
-    print Dumper( \%actions, \%schema_file_map );    # DEBUG
+    ##print Dumper( \%actions, \%schema_file_map );    # DEBUG
 
+    # I'm writing the XML out directly using prnt-statements, because I
+    # couldn't get XML::Simple to do it correctly for me.
+
+    print "<SUBMISSION>\n";
+    print "<ACTIONS>\n";
     foreach my $action ( keys(%actions) ) {
         if ( $action ne 'HOLD' ) {
             foreach my $schema ( keys(%schema_file_map) ) {
-                push( @{ $submission_xml{'ACTIONS'} },
-                      { 'ACTION' => {
-                              $action => {
-                                  'source' => $schema_file_map{$schema},
-                                  'schema' => lc($schema) } } } );
+                printf( "<ACTION>" .
+                          "<%s source=\"%s\" schema=\"%s\" />" .
+                          "</ACTION>\n",
+                        $action, $schema_file_map{$schema},
+                        lc($schema) );
             }
         }
     }
     if ( exists( $actions{'HOLD'} ) ) {
-        push( @{ $submission_xml{'ACTIONS'} },
-              {  'ACTION' => {
-                       'HOLD' => { 'HoldUntilDate' => $actions{'HOLD'} }
-                 } } );
+        printf( "<ACTION><HOLD HoldUntilDate=\"%s\" /></ACTION>\n",
+                $actions{'HOLD'} );
     }
-
-    print Dumper( \%submission_xml );    # DEBUG
+    print("</ACTIONS>\n");
+    print("</SUBMISSION>\n");
 
     my $submission_xml_file;
     # TODO: Write submission XML to file $submission_xml_file here.
