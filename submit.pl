@@ -10,7 +10,7 @@ use warnings;
 use Carp;
 use Config::Simple;
 use Data::Dumper;    # for debugging only
-use Digest::MD5::File qw( file_md5_hex );
+use Digest::MD5;
 use File::Spec::Functions qw( splitpath catfile );
 use Getopt::Long;
 use HTTP::Request::Common qw( POST );
@@ -121,12 +121,14 @@ sub do_data_upload
     #
 
     foreach my $data_file (@data_files) {
-        my $digest = file_md5_hex($data_file);
+        my $ctx = Digest::MD5->new();
+
+        $ctx->addfile($data_file);
 
         my $md5_file = sprintf( "%s.md5", $data_file );
         my $md5_out = IO::File->new( $md5_file, "w" );
 
-        $md5_out->print( $digest, "\n" );
+        $md5_out->print( $ctx->hexdigest(), "\n" );
         $md5_out->close();
 
         if ( !$opt_quiet ) {
