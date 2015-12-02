@@ -307,9 +307,9 @@ sub do_submission
     my $request = POST( $url,
                         Content_Type => 'form-data',
                         Content      => [
-                                 'SUBMISSION' => [$submission_xml_file],
-                                 map { $_ => [ $schema_file_map{$_} ] }
-                                   keys(%schema_file_map) ] );
+                                  'SUBMISSION' => [$opt_out],
+                                  map { $_ => [ $schema_file_map{$_} ] }
+                                    keys(%schema_file_map) ] );
 
     ##print Dumper($request);    # DEBUG
 
