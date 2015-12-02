@@ -30,21 +30,23 @@ my $ENA_WEBIN_FTP = 'webin.ebi.ac.uk';
 
 # All $opt_ variables are global too
 #
-my @opt_action;
 my $opt_config  = 'submit.conf';
 my $opt_debug   = 1;
 my $opt_help    = 0;
 my $opt_net     = 1;
+my $opt_out     = 'submission.xml';
 my $opt_profile = 'default';
 my $opt_quiet   = 0;
 my $opt_test    = 1;
 my $opt_upload  = 0;
+my @opt_action;
 
 if ( !GetOptions( "action|a=s"  => \@opt_action,
                   "config|c=s"  => \$opt_config,
                   "debug!"      => \$opt_debug,
                   "help|h!"     => \$opt_help,
                   "net!"        => \$opt_net,
+                  "out|o=s"     => \$opt_out,
                   "profile|p=s" => \$opt_profile,
                   "quiet!"      => \$opt_quiet,
                   "test|t!"     => \$opt_test,
@@ -240,8 +242,7 @@ sub do_submission
 
     ##print Dumper( \%actions, \%schema_file_map );    # DEBUG
 
-    my $submission_xml_file = 'submission.xml';
-    my $xml_out = IO::File->new($submission_xml_file, 'w');
+    my $xml_out = IO::File->new( $opt_out, 'w' );
 
     # I'm writing the XML out directly using prnt-statements, because I
     # couldn't get XML::Simple to do it correctly for me.
@@ -270,8 +271,6 @@ sub do_submission
     $xml_out->print("</SUBMISSION>\n");
 
     $xml_out->close();
-
-    # TODO: Write submission XML to file $submission_xml_file here.
 
     if ( !$opt_net ) { return }
 
@@ -582,6 +581,12 @@ Display full help text, and exit.
 Make a connection to ENA over the network.  With B<--nonet>, no network
 connection to ENA will be made.  The default is to make a network
 connection.
+
+=item B<--out> or B<-o>
+
+Specify the file name to use for the created submission XML.  The
+default file name is C<submission.xml> (in the current working
+directory).
 
 =item B<--profile> or B<-p>
 
