@@ -11,6 +11,7 @@ use Carp;
 use Config::Simple;
 use Data::Dumper;    # for debugging only
 use Digest::MD5;
+use File::Basename;
 use File::Spec::Functions qw( splitpath catfile );
 use Getopt::Long;
 use HTTP::Request::Common qw( POST );
@@ -233,7 +234,10 @@ sub do_submission
         my @toplevel = keys( %{$xml} );
         if ( scalar(@toplevel) == 1 && lc( $toplevel[0] ) ne 'actions' )
         {
-            $schema_file_map{ $toplevel[0] } = $xml_file;
+            $schema_file_map{ $toplevel[0] } = {
+                                       'fullname' => $xml_file,
+                                       'basename' => basename($xml_file)
+            };
         }
         elsif ( !$opt_quiet ) {
             printf( "!!> WARNING: Skipping XML file '%s'\n",
@@ -248,7 +252,9 @@ sub do_submission
     # I'm writing the XML out directly using prnt-statements, because I
     # couldn't get XML::Simple to do it correctly for me.
 
-    $xml_out->print("<SUBMISSION>\n");
+    my ($center_name) = get_config( $opt_profile, 'center_name' );
+
+    $xml_out->printf( "<SUBMISSION center_name='%s'>\n", $center_name );
     $xml_out->print("<ACTIONS>\n");
     foreach my $action ( keys(%actions) ) {
         if ( $action ne 'HOLD' ) {
@@ -258,7 +264,7 @@ sub do_submission
                                   "<%s source=\"%s\" schema=\"%s\" />" .
                                   "</ACTION>\n",
                                 $action,
-                                $schema_file_map{$schema},
+                                $schema_file_map{$schema}{'basename'},
                                 lc($schema) );
             }
         }
@@ -300,17 +306,21 @@ sub do_submission
         $url = $ENA_PRODUCTION_URL;
     }
 
-    my ( $username, $password ) = get_userpass();
+    my ( $username, $password ) =
+      get_config( $opt_profile, 'username', 'password' );
 
     $url =
       sprintf( "%s?auth=ENA%%20%s%%20%s", $url, $username, $password );
 
-    my $request = POST( $url,
-                        Content_Type => 'form-data',
-                        Content      => [
-                                  'SUBMISSION' => [$opt_out],
-                                  map { $_ => [ $schema_file_map{$_} ] }
-                                    keys(%schema_file_map) ] );
+    my $request = POST(
+        $url,
+        Content_Type => 'form-data',
+        Content      => [
+            'SUBMISSION' => [$opt_out],
+            map {
+                $_ => [ $schema_file_map{$_}{'fullname'} ]
+              }
+              keys(%schema_file_map) ] );
 
     ##print Dumper($request);    # DEBUG
 
@@ -372,13 +382,21 @@ sub get_config
     # will be filled in with values taken from the default profile.
     # Missing settings will cause an error.
     #
+    # Call for getting specific values:
+    #   ( $setting1, $setting2 ) =
+    #     get_config( $profile, 'setting1', 'setting2' );
+    #
+    # Call to get all values of a block:
+    #   %settings = %{ get_config('profile') };
 
     my @values;
-    my @default_values;
+    my %default_values;
 
     if ( $profile ne 'default' ) {
-        @default_values = get_config( 'default', @settings );
+        %default_values = %{ get_config('default') };
     }
+
+    ##print Dumper( \%default_values );    # DEBUG
 
     if ( !-f $opt_config ) {
         printf( "!!> ERROR: The specified configuration file '%s' " .
@@ -400,27 +418,29 @@ sub get_config
         exit(1);
     }
 
+    if ( scalar(@settings) == 0 ) {
+        return $profile_block;
+    }
+
     for ( my $si = 0; $si < scalar(@settings); ++$si ) {
         if ( exists( $profile_block->{ $settings[$si] } ) ) {
             $values[$si] = $profile_block->{ $settings[$si] };
         }
         else {
-            $values[$si] = $default_values[$si];
+            $values[$si] = $default_values{ $settings[$si] };
         }
     }
 
-    if ( $profile ne 'default' ) {
-        my $error = 0;
-        for ( my $si = 0; $si < scalar(@settings); ++$si ) {
-            if ( !defined( $values[$si] ) ) {
-                printf( "!!> ERROR: Unable to find setting '%s' " .
-                          "for profile '%s' in '%s'\n",
-                        $settings[$si], $profile, $opt_config );
-                $error = 1;
-            }
+    my $error = 0;
+    for ( my $si = 0; $si < scalar(@settings); ++$si ) {
+        if ( !defined( $values[$si] ) ) {
+            printf( "!!> ERROR: Unable to find setting '%s' " .
+                      "for profile '%s' in '%s'\n",
+                    $settings[$si], $profile, $opt_config );
+            $error = 1;
         }
-        if ($error) { exit(1) }
     }
+    if ($error) { exit(1) }
 
     return @values;
 } ## end sub get_config
