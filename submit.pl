@@ -231,7 +231,8 @@ sub do_submission
                  NoAttr     => 1,
                  KeyAttr    => '' );
         my @toplevel = keys( %{$xml} );
-        if ( scalar(@toplevel) == 1 ) {
+        if ( scalar(@toplevel) == 1 && lc( $toplevel[0] ) ne 'actions' )
+        {
             $schema_file_map{ $toplevel[0] } = $xml_file;
         }
         elsif ( !$opt_quiet ) {
