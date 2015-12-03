@@ -225,27 +225,57 @@ sub do_submission
     ##print Dumper( \%actions );    # DEBUG
 
     my %schema_file_map;
+    my $center_name;
+    my $submission_alias;
+
     foreach my $xml_file (@xml_files) {
         # Read each XML file to figure out what type of XML it contains.
         # Weed out any submission XML file.
+
         my $xml =
           XMLin( $xml_file,
                  ForceArray => undef,
-                 NoAttr     => 1,
                  KeyAttr    => '' );
+
         my @toplevel = keys( %{$xml} );
+
         if ( scalar(@toplevel) == 1 && lc( $toplevel[0] ) ne 'actions' )
         {
             $schema_file_map{ $toplevel[0] } = {
                                        'fullname' => $xml_file,
                                        'basename' => basename($xml_file)
             };
-        }
+
+            if ( defined($center_name) &&
+                 $center_name ne $xml->{ $toplevel[0] }{'center_name'} )
+            {
+                printf( "!!> WARNING: 'centre_name' not consistant " .
+                          "in XML file '%s': %s != %s\n",
+                        $xml_file, $center_name,
+                        $xml->{ $toplevel[0] }{'center_name'} );
+            }
+            if ( lc( $toplevel[0] ) ne 'run' &&
+                 defined($submission_alias) &&
+                 $submission_alias ne $xml->{ $toplevel[0] }{'alias'} )
+            {
+                printf( "!!> WARNING: 'alias' not consistant " .
+                          "in XML file '%s': %s != %s\n",
+                        $xml_file, $submission_alias,
+                        $xml->{ $toplevel[0] }{'alias'} );
+            }
+
+            # Pick out "center_name" and "alias" from the XML, unless it's a
+            # "run" XML file.
+            if ( lc( $toplevel[0] ) ne 'run' ) {
+                $center_name = $xml->{ $toplevel[0] }{'center_name'};
+                $submission_alias = $xml->{ $toplevel[0] }{'alias'};
+            }
+        } ## end if ( scalar(@toplevel)...)
         elsif ( !$opt_quiet ) {
             printf( "!!> WARNING: Skipping XML file '%s'\n",
                     $xml_file );
         }
-    }
+    } ## end foreach my $xml_file (@xml_files)
 
     ##print Dumper( \%actions, \%schema_file_map );    # DEBUG
 
@@ -254,9 +284,8 @@ sub do_submission
     # I'm writing the XML out directly using prnt-statements, because I
     # couldn't get XML::Simple to do it correctly for me.
 
-    my ($center_name) = get_config( $opt_profile, 'center_name' );
-
-    $xml_out->printf( "<SUBMISSION center_name='%s'>\n", $center_name );
+    $xml_out->printf( "<SUBMISSION alias='%s' center_name='%s'>\n",
+                      $submission_alias, $center_name );
     $xml_out->print("<ACTIONS>\n");
     foreach my $action ( keys(%actions) ) {
         if ( $action ne 'HOLD' ) {
