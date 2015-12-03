@@ -126,7 +126,9 @@ sub do_data_upload
     foreach my $data_file (@data_files) {
         my $ctx = Digest::MD5->new();
 
-        $ctx->addfile($data_file);
+        my $bam_in = IO::File->new( $data_file, "r" );
+        $ctx->addfile($bam_in);
+        $bam_in->close();
 
         my $md5_file = sprintf( "%s.md5", $data_file );
         my $md5_out = IO::File->new( $md5_file, "w" );
