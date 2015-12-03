@@ -344,8 +344,18 @@ sub do_submission
     ##print Dumper($response_xml);    # DEBUG
 
     if ( !$opt_quiet ) {
-        printf( "==> ENA says: %s\n",
-                $response_xml->{'MESSAGES'}{'INFO'} );
+        if ( ref( $response_xml->{'MESSAGES'}{'INFO'} ) eq 'ARRAY' ) {
+            foreach
+              my $reply ( @{ $response_xml->{'MESSAGES'}{'INFO'} } )
+            {
+                printf( "==> ENA says: %s\n", $reply );
+            }
+        }
+        else {
+            printf( "==> ENA says: %s\n",
+                    $response_xml->{'MESSAGES'}{'INFO'} );
+        }
+        print("\n");
     }
 
     if ( $response_xml->{'success'} eq 'false' ) {
