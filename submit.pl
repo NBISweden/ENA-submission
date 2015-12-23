@@ -389,6 +389,16 @@ sub do_submission
         print("\n");
     }
 
+    foreach my $toplevel ( keys( %{$response_xml} ) ) {
+        if ( ref( $response_xml->{$toplevel} ) eq 'HASH' &&
+             exists( $response_xml->{$toplevel}{'accession'} ) )
+        {
+            printf( "==> ENA %s accession = '%s'\n",
+                    $toplevel,
+                    $response_xml->{$toplevel}{'accession'} );
+        }
+    }
+
     if ( $response_xml->{'success'} eq 'false' ) {
         if ( ref( $response_xml->{'MESSAGES'}{'ERROR'} ) eq 'ARRAY' ) {
             my $error_count = 0;
