@@ -509,6 +509,9 @@ uploading data files, and the other is used for submitting XML.  The
 script will determine which of these is requested by looking for the
 B<--upload> option on the command line (used for uploading data).
 
+Run the script with B<--help> to get more verbose help with options and
+general configuration.
+
 =head2 Uploading data to ENA
 
     ./submit.pl [ --nodebug ] [ --quiet ] [ --nonet ] \
@@ -587,15 +590,14 @@ Archive (EGA)."
 
 =item B<--upload>
 
-Upload a single data file to ENA.  If this option is not present on the
-command line it is assumed that a set of XML files should be submitted.
+Upload one or several data files to ENA.
 
-The data file is a file in BAM or CRAM format or in whatever other file
+Each data file is a file in BAM or CRAM format or in whatever other file
 format ENA accepts.  No check is made of the data file format or its
 integrity by this script.
 
-The data file is specified by adding its path to the end of the command
-line.
+The data files are specified by adding their path to the end of the
+command line.
 
 The MD5 digests (checksums) of each of the data files are written to a
 corresponding C<.md5> file, and both the data and digests are uploaded
@@ -620,8 +622,8 @@ Example configuration file:
     username    =   "their_username"
     password    =   "their_PaSSW0rd@#"
 
-Use the B<--profile> option to pick any non-default profile.  All
-configuration settings not present in a specifit profile section will be
+Use the B<--profile> option to pick any non-default profile.  Any
+configuration settings not present in a specific profile section will be
 copied from the C<default> section.
 
 A file called C<submit.conf> will be used if this option is not used.
@@ -632,7 +634,7 @@ The following are the configuration setting that needs to be specified:
 
 =item B<username>
 
-ENA Webin account username.
+ENA Webin account username (or email address).
 
 =item B<password>
 
@@ -642,7 +644,7 @@ ENA Webin account password.
 
 =item B<--debug>
 
-Display various debug output.  This is the default during development.
+Display various debug output.
 
 =item B<--help> or B<-h>
 
@@ -670,14 +672,15 @@ The profile called C<default> will be used if this option is not used.
 
 =item B<--quiet>
 
-Be quiet. Only error messages will be displayed.  This option may be
-negated using B<--noquiet> (which is the default).
+Be quiet. Only error messages (fatal) and warning messages (non-fatal)
+will be displayed.  This option may be negated using B<--noquiet> (which
+is the default).
 
 =item B<--test> or B<-t>
 
-When submitting XML using the B<submission> action, submit only to the
-ENA test server, not to the ENA production server.  This option is
-enabled by default and my be negated using the B<--notest> option.
+When submitting XML, submit only to the ENA test server, not to the ENA
+production server.  This option is enabled by default and my be negated
+using the B<--notest> option.
 
 =back
 
