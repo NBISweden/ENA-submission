@@ -32,7 +32,7 @@ my $ENA_WEBIN_FTP = 'webin.ebi.ac.uk';
 # All $opt_ variables are global too
 #
 my $opt_config  = 'submit.conf';
-my $opt_debug   = 1;
+my $opt_debug   = 0;
 my $opt_help    = 0;
 my $opt_net     = 1;
 my $opt_out     = 'submission.xml';
