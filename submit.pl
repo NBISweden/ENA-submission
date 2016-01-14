@@ -197,9 +197,6 @@ sub do_submission
         $xml_file{$file_basename}{'file'} = $file;
     }
 
-    # TODO: Create submission XML file using the XML files from
-    # %xml_file and the actions in @action.
-
     my %actions;
     foreach my $action_with_parameter (@opt_action) {
         my ( $action, $parameter ) =
