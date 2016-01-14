@@ -234,7 +234,14 @@ sub do_submission
                  ForceArray => undef,
                  KeyAttr    => '' );
 
-        my @toplevel = keys( %{$xml} );
+        my @toplevel;
+        foreach my $toplevel ( keys( %{$xml} ) ) {
+            if ( $toplevel !~ /xsi|xmlns/ ) {
+                push( @toplevel, $toplevel );
+            }
+        }
+
+        ##print Dumper( \@toplevel );    # DEBUG
 
         if ( scalar(@toplevel) == 1 && lc( $toplevel[0] ) ne 'actions' )
         {
