@@ -285,7 +285,7 @@ sub do_submission
 
     my $xml_out = IO::File->new( $opt_out, 'w' );
 
-    # I'm writing the XML out directly using prnt-statements, because I
+    # I'm writing the XML out directly using print-statements, because I
     # couldn't get XML::Simple to do it correctly for me.
 
     $xml_out->printf( "<SUBMISSION alias='%s' center_name='%s'>\n",
