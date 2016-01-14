@@ -321,8 +321,8 @@ sub do_submission
     # To get around "certificate verify failed" (error 500)
     #
     $ENV{'PERL_LWP_SSL_VERIFY_HOSTNAME'} = 0;
-    IO::Socket::SSL::set_ctx_defaults( SSL_verifycn_scheme => 'www',
-                                       SSL_verify_mode     => 0, );
+    IO::Socket::SSL::set_defaults( SSL_verifycn_scheme => 'www',
+                                   SSL_verify_mode     => 0, );
 
     my $ua = LWP::UserAgent->new();
     $ua->show_progress($opt_debug);
