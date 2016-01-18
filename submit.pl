@@ -265,7 +265,7 @@ sub do_submission
                 $center_name = $xml->{ $toplevel[0] }{'center_name'};
                 $submission_alias = $xml->{ $toplevel[0] }{'alias'};
             }
-        } ## end if ( scalar(@toplevel)...)
+        }
         elsif ( !$opt_quiet ) {
             printf( "!!> WARNING: Skipping XML file '%s'\n",
                     $xml_file );
@@ -393,13 +393,13 @@ sub do_submission
                     $response_xml->{$toplevel}{'accession'},
                     $response_xml->{$toplevel}{'alias'} );
 
-                if ( exists( $response_xml->{$toplevel}{'EXT_ID'} ) ) {
-                    printf( ", EXT_ID = '%s'",
-                            $response_xml->{$toplevel}{'EXT_ID'}
-                              {'accession'} );
-                }
+            if ( exists( $response_xml->{$toplevel}{'EXT_ID'} ) ) {
+                printf( ", EXT_ID = '%s'",
+                        $response_xml->{$toplevel}{'EXT_ID'}
+                          {'accession'} );
+            }
 
-                print("\n");
+            print("\n");
         }
     }
 
