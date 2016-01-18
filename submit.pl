@@ -258,15 +258,6 @@ sub do_submission
                         $xml_file, $center_name,
                         $xml->{ $toplevel[0] }{'center_name'} );
             }
-            if ( lc( $toplevel[0] ) ne 'run' &&
-                 defined($submission_alias) &&
-                 $submission_alias ne $xml->{ $toplevel[0] }{'alias'} )
-            {
-                printf( "!!> WARNING: 'alias' not consistant " .
-                          "in XML file '%s': %s != %s\n",
-                        $xml_file, $submission_alias,
-                        $xml->{ $toplevel[0] }{'alias'} );
-            }
 
             # Pick out "center_name" and "alias" from the XML, unless it's a
             # "run" XML file.
