@@ -388,9 +388,18 @@ sub do_submission
         if ( ref( $response_xml->{$toplevel} ) eq 'HASH' &&
              exists( $response_xml->{$toplevel}{'accession'} ) )
         {
-            printf( "==> ENA %s accession = '%s'\n",
+            printf( "==> ENA %s accession = '%s', alias = '%s'",
                     $toplevel,
-                    $response_xml->{$toplevel}{'accession'} );
+                    $response_xml->{$toplevel}{'accession'},
+                    $response_xml->{$toplevel}{'alias'} );
+
+                if ( exists( $response_xml->{$toplevel}{'EXT_ID'} ) ) {
+                    printf( ", EXT_ID = '%s'",
+                            $response_xml->{$toplevel}{'EXT_ID'}
+                              {'accession'} );
+                }
+
+                print("\n");
         }
     }
 
