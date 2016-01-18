@@ -234,6 +234,8 @@ sub do_submission
                  ForceArray => undef,
                  KeyAttr    => '' );
 
+        ##print Dumper($xml);    # DEBUG
+
         my @toplevel;
         foreach my $toplevel ( keys( %{$xml} ) ) {
             if ( $toplevel !~ /xsi|xmlns/ ) {
@@ -384,25 +386,6 @@ sub do_submission
         print("\n");
     }
 
-    foreach my $toplevel ( keys( %{$response_xml} ) ) {
-        if ( ref( $response_xml->{$toplevel} ) eq 'HASH' &&
-             exists( $response_xml->{$toplevel}{'accession'} ) )
-        {
-            printf( "==> ENA %s accession = '%s', alias = '%s'",
-                    $toplevel,
-                    $response_xml->{$toplevel}{'accession'},
-                    $response_xml->{$toplevel}{'alias'} );
-
-            if ( exists( $response_xml->{$toplevel}{'EXT_ID'} ) ) {
-                printf( ", EXT_ID = '%s'",
-                        $response_xml->{$toplevel}{'EXT_ID'}
-                          {'accession'} );
-            }
-
-            print("\n");
-        }
-    }
-
     if ( $response_xml->{'success'} eq 'false' ) {
         if ( ref( $response_xml->{'MESSAGES'}{'ERROR'} ) eq 'ARRAY' ) {
             my $error_count = 0;
@@ -422,6 +405,25 @@ sub do_submission
     else {
         if ( !$opt_quiet ) {
             print("==> Success\n");
+        }
+    }
+
+    foreach my $toplevel ( keys( %{$response_xml} ) ) {
+        if ( ref( $response_xml->{$toplevel} ) eq 'HASH' &&
+             exists( $response_xml->{$toplevel}{'accession'} ) )
+        {
+            printf( "%s\t%s\t%s",
+                    lc($toplevel),
+                    $response_xml->{$toplevel}{'alias'},
+                    $response_xml->{$toplevel}{'accession'} );
+
+            if ( exists( $response_xml->{$toplevel}{'EXT_ID'} ) ) {
+                printf( "\t%s",
+                        $response_xml->{$toplevel}{'EXT_ID'}
+                          {'accession'} );
+            }
+
+            print("\n");
         }
     }
 
