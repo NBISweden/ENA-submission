@@ -112,7 +112,8 @@ sub do_data_upload
     my $error = 0;
     foreach my $data_file (@data_files) {
         if ( !-f $data_file ) {
-            printf( "!!> ERROR: The data file '%s' was not found\n",
+            printf( STDERR
+                      "!!> ERROR: The data file '%s' was not found\n",
                     $data_file );
             $error = 1;
         }
@@ -137,7 +138,8 @@ sub do_data_upload
         $md5_out->close();
 
         if ( !$opt_quiet ) {
-            printf( "==> Wrote MD5 digest to '%s'\n", $md5_file );
+            printf( STDERR "==> Wrote MD5 digest to '%s'\n",
+                    $md5_file );
         }
     }
 
@@ -177,7 +179,7 @@ sub do_data_upload
     $ftp->quit();
 
     if ( !$opt_quiet ) {
-        print( "==> Submitted data file(s) and MD5 digest(s) " .
+        print( STDERR "==> Submitted data file(s) and MD5 digest(s) " .
                "to ENA FTP server\n" );
     }
 } ## end sub do_data_upload
@@ -255,7 +257,8 @@ sub do_submission
             if ( defined($center_name) &&
                  $center_name ne $xml->{ $toplevel[0] }{'center_name'} )
             {
-                printf( "!!> WARNING: 'centre_name' not consistant " .
+                printf( STDERR
+                          "!!> WARNING: 'centre_name' not consistant " .
                           "in XML file '%s': %s != %s\n",
                         $xml_file, $center_name,
                         $xml->{ $toplevel[0] }{'center_name'} );
@@ -269,7 +272,7 @@ sub do_submission
             }
         }
         elsif ( !$opt_quiet ) {
-            printf( "!!> WARNING: Skipping XML file '%s'\n",
+            printf( STDERR "!!> WARNING: Skipping XML file '%s'\n",
                     $xml_file );
         }
     } ## end foreach my $xml_file (@xml_files)
@@ -357,12 +360,12 @@ sub do_submission
     ##print Dumper($response);    # DEBUG
 
     if ( !$response->is_success() ) {
-        printf( "!!> ERROR: HTTPS request failed: %s\n",
+        printf( STDERR "!!> ERROR: HTTPS request failed: %s\n",
                 $response->as_string() );
         exit(1);
     }
     elsif ( !$opt_quiet ) {
-        print("==> HTTPS request successful\n");
+        print( STDERR "==> HTTPS request successful\n" );
     }
 
     my $response_xml = XMLin( $response->decoded_content(),
@@ -376,14 +379,14 @@ sub do_submission
             foreach
               my $reply ( @{ $response_xml->{'MESSAGES'}{'INFO'} } )
             {
-                printf( "==> ENA says: %s\n", $reply );
+                printf( STDERR "==> ENA says: %s\n", $reply );
             }
         }
         else {
-            printf( "==> ENA says: %s\n",
+            printf( STDERR "==> ENA says: %s\n",
                     $response_xml->{'MESSAGES'}{'INFO'} );
         }
-        print("\n");
+        print( STDERR "\n" );
     }
 
     if ( $response_xml->{'success'} eq 'false' ) {
@@ -392,19 +395,19 @@ sub do_submission
             foreach my $error_message (
                              @{ $response_xml->{'MESSAGES'}{'ERROR'} } )
             {
-                printf( "!!> ERROR #%d: Submission failed: %s\n",
+                printf( STDERR "!!> ERROR #%d: Submission failed: %s\n",
                         ++$error_count, $error_message );
             }
         }
         else {
-            printf( "!!> ERROR: Submission failed: %s\n",
+            printf( STDERR "!!> ERROR: Submission failed: %s\n",
                     $response_xml->{'MESSAGES'}{'ERROR'} );
         }
         exit(1);
     }
     else {
         if ( !$opt_quiet ) {
-            print("==> Success\n");
+            print( STDERR "==> Success\n" );
         }
     }
 
