@@ -18,6 +18,7 @@ use HTTP::Request::Common qw( POST );
 use IO::File;
 use LWP::UserAgent;
 use Net::FTP;
+use POSIX qw( strftime );
 use Pod::Usage;
 use XML::Simple qw( :strict );
 
@@ -225,7 +226,17 @@ sub do_submission
 
     my %schema_file_map;
     my $center_name;
-    my $submission_alias;
+
+    my ( $username, $password ) =
+      get_config( $opt_profile, 'username', 'password' );
+
+    my $submission_alias = sprintf( "%s_%s",
+                                    $username,
+                                    strftime(
+                                            "%Y%m%d:%H%M%S", localtime()
+                                    ) );
+
+    ##printf( "submission_alias = %s\n", $submission_alias );    # DEBUG
 
     foreach my $xml_file (@xml_files) {
         # Read each XML file to figure out what type of XML it contains.
@@ -268,7 +279,6 @@ sub do_submission
             # "run" XML file.
             if ( lc( $toplevel[0] ) ne 'run' ) {
                 $center_name = $xml->{ $toplevel[0] }{'center_name'};
-                $submission_alias = $xml->{ $toplevel[0] }{'alias'};
             }
         }
         elsif ( !$opt_quiet ) {
@@ -336,9 +346,6 @@ sub do_submission
     else {
         $url = $ENA_PRODUCTION_URL;
     }
-
-    my ( $username, $password ) =
-      get_config( $opt_profile, 'username', 'password' );
 
     $url =
       sprintf( "%s?auth=ENA%%20%s%%20%s", $url, $username, $password );
