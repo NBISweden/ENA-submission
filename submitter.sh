@@ -14,6 +14,17 @@
 #
 #   5.  Submits the compressed flat file, together with its MD5 digest,
 #       to the ENA servers.
+#
 #   6.  Generates the analysis XML.
 #
 #   7.  Submits the generated analysis XML to the ENA servers.
+
+# Current restrictions and assumptions:
+#
+#   1.  All input files are located in the one and same directory.
+#
+#   2.  All XML input files have obvious names, i.e. the sample XML file
+#       is called "sample.xml" etc.
+#
+#   3.  The data flat file is also located in this same directory, and
+#       its name is given on the command line to this script.
