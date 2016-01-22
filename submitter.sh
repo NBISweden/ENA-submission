@@ -28,3 +28,12 @@
 #
 #   3.  The data flat file is also located in this same directory, and
 #       its name is given on the command line to this script.
+
+flatfile="$1"
+
+if [ ! -f "$flatfile" ]; then
+    echo "Can not find flat file '$flatfile'!"
+    exit 1
+fi
+
+datadir="$( dirname "$flatfile" )"
