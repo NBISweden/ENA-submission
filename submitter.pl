@@ -63,13 +63,14 @@ elsif ( !-f "$datadir/analysis.xml" ) {
                     "$datadir/analysis.xml" ) );
 }
 
-system( "./submit.pl -c submit.conf.dist --action ADD " .
-        "$datadir/study.xml $datadir/sample.xml >submit.out" );
+# The following commeted out while developing:
+#system( "./submit.pl -c submit.conf.dist --action ADD " .
+#"$datadir/study.xml $datadir/sample.xml >submit.out" );
 
-my $submit_in = File::IO->new( "submit.out", "r" );
+my $submit_in = IO::File->new( "submit.out", "r" );
 
-my @study_ids;
-my @sample_ids;
+my @study;
+my @sample;
 
 while ( my $line = $submit_in->getline() ) {
     chomp($line);
@@ -77,13 +78,16 @@ while ( my $line = $submit_in->getline() ) {
     my @fields = split( /\t/, $line );
 
     if ( $line =~ /^study/ ) {
-        push( @study_ids, $fields[-1] );
+        push( @study, { 'alias' => $fields[1], 'id' => $fields[2] } );
     }
     elsif ( $line =~ /^sample/ ) {
-        push( @sample_ids, $fields[-1] );
+        push( @sample,
+              {  'alias' => $fields[1],
+                 'id'    => $fields[2],
+                 'extid' => $fields[3] } );
     }
 }
 
 $submit_in->close();
 
-print Dumper( \@study_ids, \@sample_ids );    # DEBUG
+print Dumper( \@study, \@sample );    # DEBUG
