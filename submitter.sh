@@ -8,6 +8,7 @@
 #
 #   2.  Receives the identifiers assigned by the ENA to the submitted
 #       study and sample.
+#
 #   3.  Updates the given flat file with the sample identifier.
 #
 #   4.  Compresses the flat file.
@@ -37,3 +38,22 @@ if [ ! -f "$flatfile" ]; then
 fi
 
 datadir="$( dirname "$flatfile" )"
+
+if [ ! -f "$datadir/study.xml" ]; then
+    echo "Can not find study XML file '$datadir/study.xml'"
+    exit 1
+elif [ ! -f "$datadir/sample.xml" ]; then
+    echo "Can not find sample XML file '$datadir/sample.xml'"
+    exit 1
+elif [ ! -f "$datadir/analysis.xml" ]; then
+    echo "Can not find analysis XML file '$datadir/analysis.xml'"
+    exit 1
+fi
+
+#./submit.pl -c submit.conf.dist --action ADD \
+    #"$datadir/study.xml" "$datadir/sample.xml" >submit.out
+
+study_id=$( awk '/^study/ { print $NF }' submit.out )
+sample_id=$( awk '/^sample/ { print $NF }' submit.out )
+
+
