@@ -293,7 +293,7 @@ sub do_submission
     # I'm writing the XML out directly using print-statements, because I
     # couldn't get XML::Simple to do it correctly for me.
 
-    my ($center_name) = get_config($opt_profile, 'center_name');
+    my ($center_name) = get_config( $opt_profile, 'center_name' );
 
     $xml_out->printf( "<SUBMISSION alias='%s' center_name='%s'>\n",
                       $submission_alias, $center_name );
