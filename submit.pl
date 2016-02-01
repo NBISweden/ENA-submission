@@ -225,6 +225,7 @@ sub do_submission
     if ( !exists( $actions{'HOLD'} ) ) {
         if ( !exists( $actions{'RELEASE'} ) &&
              !exists( $actions{'CANCEL'} ) &&
+             !exists( $actions{'MODIFY'} ) &&
              !exists( $actions{'SUPPRESS'} ) )
         {
             my ( $year, $month, $day ) =
