@@ -240,7 +240,6 @@ sub do_submission
     ##print Dumper( \%actions );    # DEBUG
 
     my %schema_file_map;
-    my $center_name;
 
     my ( $username, $password ) =
       get_config( $opt_profile, 'username', 'password' );
@@ -279,22 +278,6 @@ sub do_submission
                                        'fullname' => $xml_file,
                                        'basename' => basename($xml_file)
             };
-
-            if ( defined($center_name) &&
-                 $center_name ne $xml->{ $toplevel[0] }{'center_name'} )
-            {
-                printf( STDERR
-                          "!!> WARNING: 'centre_name' not consistant " .
-                          "in XML file '%s': %s != %s\n",
-                        $xml_file, $center_name,
-                        $xml->{ $toplevel[0] }{'center_name'} );
-            }
-
-            # Pick out "center_name" and "alias" from the XML, unless it's a
-            # "run" XML file.
-            if ( lc( $toplevel[0] ) ne 'run' ) {
-                $center_name = $xml->{ $toplevel[0] }{'center_name'};
-            }
         }
         elsif ( !$opt_quiet ) {
             printf( STDERR "!!> WARNING: Skipping XML file '%s'\n",
@@ -308,6 +291,8 @@ sub do_submission
 
     # I'm writing the XML out directly using print-statements, because I
     # couldn't get XML::Simple to do it correctly for me.
+
+    my ($center_name) = get_config($opt_profile, 'center_name');
 
     $xml_out->printf( "<SUBMISSION alias='%s' center_name='%s'>\n",
                       $submission_alias, $center_name );
