@@ -74,22 +74,24 @@ if ($opt_upload) {
 #   MODIFY:     "Modify an object in the archive."
 #
 #   CANCEL:     "Cancel an object which has not been made public.
-#                Cancelled objects will not be made public."
+#               Cancelled objects will not be made public."  NOT
+#               CURRENTLY SUPPORTED!
 #
 #   SUPPRESS:   "Suppress an object which has been made public.
-#                Suppressed data will remain accessible by accession
-#                number."
+#               Suppressed data will remain accessible by accession
+#               number."  NOT CURRENTLY SUPPORTED!
 #
 #   HOLD:       "Make the object public only when the hold date
 #                expires."
 #
 #   RELEASE:    "The object will be released immediately to public."
+#               NOT CURRENTLY SUPPORTED!
 #
 #   PROTECT:    "This action is required for data submitted to European
-#                Genome-Phenome Archive (EGA)."
+#               Genome-Phenome Archive (EGA)."  NOT CURRENTLY SUPPORTED!
 #
 #   VALIDATE:   "Validates the submitted XMLs without actually
-#                submitting them."
+#               submitting them."  NOT CURRENTLY SUPPORTED!
 #
 # (ftp://ftp.sra.ebi.ac.uk/meta/xsd/latest/SRA.submission.xsd)
 #
