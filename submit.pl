@@ -261,7 +261,7 @@ sub do_submission
                  ForceArray => undef,
                  KeyAttr    => '' );
 
-        ##print Dumper($xml);    # DEBUG
+        ##die Dumper($xml);    # DEBUG
 
         my @toplevel;
         foreach my $toplevel ( keys( %{$xml} ) ) {
@@ -285,7 +285,7 @@ sub do_submission
         }
     } ## end foreach my $xml_file (@xml_files)
 
-    ##print Dumper( \%actions, \%schema_file_map );    # DEBUG
+    ##die Dumper( \%actions, \%schema_file_map );    # DEBUG
 
     my $xml_out = IO::File->new( $opt_out, 'w' );
 
@@ -508,6 +508,8 @@ sub get_config
         }
     }
     if ($error) { exit(1) }
+
+    ##print Dumper(\@values);
 
     return @values;
 } ## end sub get_config
