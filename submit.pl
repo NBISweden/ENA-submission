@@ -74,22 +74,24 @@ if ($opt_upload) {
 #   MODIFY:     "Modify an object in the archive."
 #
 #   CANCEL:     "Cancel an object which has not been made public.
-#                Cancelled objects will not be made public."
+#               Cancelled objects will not be made public."  NOT
+#               CURRENTLY SUPPORTED!
 #
 #   SUPPRESS:   "Suppress an object which has been made public.
-#                Suppressed data will remain accessible by accession
-#                number."
+#               Suppressed data will remain accessible by accession
+#               number."  NOT CURRENTLY SUPPORTED!
 #
 #   HOLD:       "Make the object public only when the hold date
 #                expires."
 #
 #   RELEASE:    "The object will be released immediately to public."
+#               NOT CURRENTLY SUPPORTED!
 #
 #   PROTECT:    "This action is required for data submitted to European
-#                Genome-Phenome Archive (EGA)."
+#               Genome-Phenome Archive (EGA)."  NOT CURRENTLY SUPPORTED!
 #
 #   VALIDATE:   "Validates the submitted XMLs without actually
-#                submitting them."
+#               submitting them."  NOT CURRENTLY SUPPORTED!
 #
 # (ftp://ftp.sra.ebi.ac.uk/meta/xsd/latest/SRA.submission.xsd)
 #
@@ -196,7 +198,7 @@ sub do_submission
     my %xml_file;
 
     foreach my $file (@xml_files) {
-        my $file_basename = ( splitpath($file) )[2];
+        my $file_basename = basename($file);
         $xml_file{$file_basename}{'file'} = $file;
     }
 
@@ -207,9 +209,23 @@ sub do_submission
         $actions{ uc($action) } = $parameter;
     }
 
+    # Check actions against currently supported actions.
+    my $action_error = 0;
+    foreach my $action ( keys(%actions) ) {
+        if ( $action ne 'ADD' &&
+             $action ne 'MODIFY' &&
+             $action ne 'HOLD' )
+        {
+            printf( STDERR "!!> Unsupported action: %s\n", $action );
+            $action_error = 1;
+        }
+    }
+    if ($action_error) { exit 1 }
+
     if ( !exists( $actions{'HOLD'} ) ) {
         if ( !exists( $actions{'RELEASE'} ) &&
              !exists( $actions{'CANCEL'} ) &&
+             !exists( $actions{'MODIFY'} ) &&
              !exists( $actions{'SUPPRESS'} ) )
         {
             my ( $year, $month, $day ) =
@@ -225,7 +241,6 @@ sub do_submission
     ##print Dumper( \%actions );    # DEBUG
 
     my %schema_file_map;
-    my $center_name;
 
     my ( $username, $password ) =
       get_config( $opt_profile, 'username', 'password' );
@@ -247,7 +262,7 @@ sub do_submission
                  ForceArray => undef,
                  KeyAttr    => '' );
 
-        ##print Dumper($xml);    # DEBUG
+        ##die Dumper($xml);    # DEBUG
 
         my @toplevel;
         foreach my $toplevel ( keys( %{$xml} ) ) {
@@ -264,22 +279,6 @@ sub do_submission
                                        'fullname' => $xml_file,
                                        'basename' => basename($xml_file)
             };
-
-            if ( defined($center_name) &&
-                 $center_name ne $xml->{ $toplevel[0] }{'center_name'} )
-            {
-                printf( STDERR
-                          "!!> WARNING: 'centre_name' not consistant " .
-                          "in XML file '%s': %s != %s\n",
-                        $xml_file, $center_name,
-                        $xml->{ $toplevel[0] }{'center_name'} );
-            }
-
-            # Pick out "center_name" and "alias" from the XML, unless it's a
-            # "run" XML file.
-            if ( lc( $toplevel[0] ) ne 'run' ) {
-                $center_name = $xml->{ $toplevel[0] }{'center_name'};
-            }
         }
         elsif ( !$opt_quiet ) {
             printf( STDERR "!!> WARNING: Skipping XML file '%s'\n",
@@ -287,12 +286,14 @@ sub do_submission
         }
     } ## end foreach my $xml_file (@xml_files)
 
-    ##print Dumper( \%actions, \%schema_file_map );    # DEBUG
+    ##die Dumper( \%actions, \%schema_file_map );    # DEBUG
 
     my $xml_out = IO::File->new( $opt_out, 'w' );
 
     # I'm writing the XML out directly using print-statements, because I
     # couldn't get XML::Simple to do it correctly for me.
+
+    my ($center_name) = get_config( $opt_profile, 'center_name' );
 
     $xml_out->printf( "<SUBMISSION alias='%s' center_name='%s'>\n",
                       $submission_alias, $center_name );
@@ -419,23 +420,31 @@ sub do_submission
     }
 
     foreach my $toplevel ( keys( %{$response_xml} ) ) {
+        my @things;
+
         if ( ref( $response_xml->{$toplevel} ) eq 'HASH' &&
              exists( $response_xml->{$toplevel}{'accession'} ) )
         {
-            printf( "%s\t%s\t%s",
-                    lc($toplevel),
-                    $response_xml->{$toplevel}{'alias'},
-                    $response_xml->{$toplevel}{'accession'} );
+            @things = ( $response_xml->{$toplevel} );
+        }
+        elsif ( ref( $response_xml->{$toplevel} ) eq 'ARRAY' &&
+                exists( $response_xml->{$toplevel}[0]{'accession'} ) )
+        {
+            @things = @{ $response_xml->{$toplevel} };
+        }
 
-            if ( exists( $response_xml->{$toplevel}{'EXT_ID'} ) ) {
-                printf( "\t%s",
-                        $response_xml->{$toplevel}{'EXT_ID'}
-                          {'accession'} );
+        foreach my $thing (@things) {
+            printf( "%s\t%s\t%s",
+                    lc($toplevel), $thing->{'alias'},
+                    $thing->{'accession'} );
+
+            if ( exists( $thing->{'EXT_ID'} ) ) {
+                printf( "\t%s", $thing->{'EXT_ID'}{'accession'} );
             }
 
             print("\n");
         }
-    }
+    } ## end foreach my $toplevel ( keys...)
 
 } ## end sub do_submission
 
@@ -508,6 +517,8 @@ sub get_config
         }
     }
     if ($error) { exit(1) }
+
+    ##print Dumper(\@values);
 
     return @values;
 } ## end sub get_config
