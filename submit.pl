@@ -198,7 +198,7 @@ sub do_submission
     my %xml_file;
 
     foreach my $file (@xml_files) {
-        my $file_basename = ( splitpath($file) )[2];
+        my $file_basename = basename($file);
         $xml_file{$file_basename}{'file'} = $file;
     }
 
