@@ -420,23 +420,31 @@ sub do_submission
     }
 
     foreach my $toplevel ( keys( %{$response_xml} ) ) {
+        my @things;
+
         if ( ref( $response_xml->{$toplevel} ) eq 'HASH' &&
              exists( $response_xml->{$toplevel}{'accession'} ) )
         {
-            printf( "%s\t%s\t%s",
-                    lc($toplevel),
-                    $response_xml->{$toplevel}{'alias'},
-                    $response_xml->{$toplevel}{'accession'} );
+            @things = ( $response_xml->{$toplevel} );
+        }
+        elsif ( ref( $response_xml->{$toplevel} ) eq 'ARRAY' &&
+                exists( $response_xml->{$toplevel}[0]{'accession'} ) )
+        {
+            @things = @{ $response_xml->{$toplevel} };
+        }
 
-            if ( exists( $response_xml->{$toplevel}{'EXT_ID'} ) ) {
-                printf( "\t%s",
-                        $response_xml->{$toplevel}{'EXT_ID'}
-                          {'accession'} );
+        foreach my $thing (@things) {
+            printf( "%s\t%s\t%s",
+                    lc($toplevel), $thing->{'alias'},
+                    $thing->{'accession'} );
+
+            if ( exists( $thing->{'EXT_ID'} ) ) {
+                printf( "\t%s", $thing->{'EXT_ID'}{'accession'} );
             }
 
             print("\n");
         }
-    }
+    } ## end foreach my $toplevel ( keys...)
 
 } ## end sub do_submission
 
