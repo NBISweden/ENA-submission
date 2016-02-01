@@ -209,6 +209,19 @@ sub do_submission
         $actions{ uc($action) } = $parameter;
     }
 
+    # Check actions against currently supported actions.
+    my $action_error = 0;
+    foreach my $action ( keys(%actions) ) {
+        if ( $action ne 'ADD' &&
+             $action ne 'MODIFY' &&
+             $action ne 'HOLD' )
+        {
+            printf( STDERR "!!> Unsupported action: %s\n", $action );
+            $action_error = 1;
+        }
+    }
+    if ($action_error) { exit 1 }
+
     if ( !exists( $actions{'HOLD'} ) ) {
         if ( !exists( $actions{'RELEASE'} ) &&
              !exists( $actions{'CANCEL'} ) &&
