@@ -63,7 +63,7 @@ elsif ( !-f "$datadir/analysis.xml" ) {
                     "$datadir/analysis.xml" ) );
 }
 
-# The following commeted out while developing:
+# The following is commented out while developing:
 #system( "./submit.pl -c submit.conf.dist --action ADD " .
 #"$datadir/study.xml $datadir/sample.xml >submit.out" );
 
