@@ -428,6 +428,7 @@ sub do_submission
             @things = ( $response_xml->{$toplevel} );
         }
         elsif ( ref( $response_xml->{$toplevel} ) eq 'ARRAY' &&
+                ref( $response_xml->{$toplevel}[0] ) eq 'HASH' &&
                 exists( $response_xml->{$toplevel}[0]{'accession'} ) )
         {
             @things = @{ $response_xml->{$toplevel} };
