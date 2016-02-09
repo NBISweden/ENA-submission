@@ -42,7 +42,7 @@ use Data::Dumper;    # For debugging only
 my $flatfile = $ARGV[0];
 
 if ( !defined($flatfile) ) {
-    croak("Expected name of data flat file on commad line!");
+    croak("Expected name of data flat file on command line!");
 }
 elsif ( !-f $flatfile ) {
     croak( sprintf( "Can not find flat file '%s'!", $flatfile ) );
