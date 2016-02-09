@@ -422,6 +422,8 @@ sub do_submission
     foreach my $toplevel ( keys( %{$response_xml} ) ) {
         my @things;
 
+        ##print STDERR "$toplevel\n";    ## DEBUG
+
         if ( ref( $response_xml->{$toplevel} ) eq 'HASH' &&
              exists( $response_xml->{$toplevel}{'accession'} ) )
         {
