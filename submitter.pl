@@ -67,6 +67,13 @@ elsif ( !-f "$datadir/analysis.xml" ) {
 #system( "./submit.pl -c submit.conf.dist --action ADD " .
 #"$datadir/study.xml $datadir/sample.xml >submit.out" );
 
+if ( !-f "submit.out" ) {
+    croak("Failed to create submit.pl output file!");
+}
+if ( -z "submit.out" ) {
+    croak("Output from submit.pl is empty.  Something went wrong!");
+}
+
 my $submit_in = IO::File->new( "submit.out", "r" );
 
 my @study;
