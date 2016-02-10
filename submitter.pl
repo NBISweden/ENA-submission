@@ -39,7 +39,7 @@ use Data::Dumper;    # For debugging only
 #   3.  The data flat file is also located in this same directory, and
 #       its name is given on the command line to this script.
 #
-#   4.  It is assumed that the alias of the sample is the same as the
+#   4.  It is assumed that the alias of the sample is the prefix of the
 #       "locus_tag" in the flat file data, i.e. that an alias of "RZ63"
 #       corresponds to locus tags "RZ63_*".
 
