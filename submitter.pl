@@ -103,4 +103,29 @@ while ( my $line = $submit_in->getline() ) {
 
 $submit_in->close();
 
-print Dumper( \@study, \@sample );    # DEBUG
+my $new_flatfile_path = catfile( $datadir, "new-" . $flatfile );
+
+my $flatfile_in = IO::File->new( $flatfile_path, "r" )
+  or
+  croak(
+      sprintf( "Failed to open '%s' for reading: %s", $flatfile_path, $!
+      ) );
+
+my $flatfile_out = IO::File->new( $new_flatfile_path, "w" )
+  or
+  croak( sprintf( "Failed to open 'new-%s' for writing: %s",
+                  $new_flatfile_path, $! ) );
+
+##print Dumper( \@study, \@samples );    # DEBUG
+
+while ( my $line = $flatfile_in->getline() ) {
+    foreach my $sample (@samples) {
+        my ( $alias, $id ) = ( $sample->{'alias'}, $sample->{'id'} );
+        if ( $line =~ s/$alias/$id/ ) { last }
+    }
+
+    $flatfile_out->print($line);
+}
+
+$flatfile_in->close();
+$flatfile_out->close();
