@@ -5,6 +5,7 @@ use warnings;
 
 use Carp;
 use File::Basename;
+use File::Spec::Functions;
 use IO::File;
 
 use Data::Dumper;    # For debugging only
@@ -43,16 +44,16 @@ use Data::Dumper;    # For debugging only
 #       "locus_tag" in the flat file data, i.e. that an alias of "RZ63"
 #       corresponds to locus tags "RZ63_*".
 
-my $flatfile = $ARGV[0];
+my $flatfile_path = $ARGV[0];
 
-if ( !defined($flatfile) ) {
+if ( !defined($flatfile_path) ) {
     croak("Expected name of data flat file on command line!");
 }
-elsif ( !-f $flatfile ) {
-    croak( sprintf( "Can not find flat file '%s'!", $flatfile ) );
+elsif ( !-f $flatfile_path ) {
+    croak( sprintf( "Can not find flat file '%s'!", $flatfile_path ) );
 }
 
-my $datadir = dirname($flatfile);
+my ( $flatfile, $datadir ) = fileparse($flatfile_path);
 
 if ( !-f "$datadir/study.xml" ) {
     croak( sprintf( "Can not find study XML file '%s'!",
@@ -74,14 +75,15 @@ elsif ( !-f "$datadir/analysis.xml" ) {
 if ( !-f "submit.out" ) {
     croak("Failed to create submit.pl output file!");
 }
-if ( -z "submit.out" ) {
+elsif ( -z "submit.out" ) {
     croak("Output from submit.pl is empty.  Something went wrong!");
 }
 
-my $submit_in = IO::File->new( "submit.out", "r" );
+my $submit_in = IO::File->new( "submit.out", "r" ) or
+  croak( sprintf( "Failed to open 'submit.out' for reading: %s", $! ) );
 
 my @study;
-my @sample;
+my @samples;
 
 while ( my $line = $submit_in->getline() ) {
     chomp($line);
@@ -92,7 +94,7 @@ while ( my $line = $submit_in->getline() ) {
         push( @study, { 'alias' => $fields[1], 'id' => $fields[2] } );
     }
     elsif ( $line =~ /^sample/ ) {
-        push( @sample,
+        push( @samples,
               {  'alias' => $fields[1],
                  'id'    => $fields[2],
                  'extid' => $fields[3] } );
