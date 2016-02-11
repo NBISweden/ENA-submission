@@ -26,9 +26,9 @@ use Data::Dumper;    # For debugging only
 #   5.  Submits the compressed flat file, together with its MD5 digest,
 #       to the ENA servers.
 #
-#   6.  Generates the analysis XML.
+#   6.  Generates a partially filled-in template for the analysis XML.
 #
-#   7.  Submits the generated analysis XML to the ENA servers.
+#   ( does not: 7.  Submits the generated analysis XML to the ENA servers. )
 
 # Current restrictions and assumptions:
 #
