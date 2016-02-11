@@ -129,3 +129,54 @@ while ( my $line = $flatfile_in->getline() ) {
 
 $flatfile_in->close();
 $flatfile_out->close();
+
+my $analysis_path = catdir( $datadir, "analysis.xml" );
+
+my $analysis_out = IO::File->new( $analysis_path, "w" )
+  or
+  croak(
+      sprintf( "Failed to open '%s' for writing: %s", $analysis_path, $!
+      ) );
+
+$analysis_out->print( <<XML_END );
+<?xml version="1.0" encoding="utf-8"?>
+<ANALYSIS_SET>
+\t<ANALYSIS
+\t  alias="%%ANALYSIS_ALIAS%%"
+\t  center_name="%%CENTER_NAME%%">
+\t\t<TITLE>%%ANALYSIS_TITLE%%</TITLE>
+\t\t<DESCRIPTION>%%ANALYSIS_DESCRIPTION%%</DESCRIPTION>
+\t\t<STUDY_REF
+\t\t  refname="%%STUDY_REFNAME%%"
+\t\t  refcenter="%%STUDY_CENTER_NAME%%" />
+XML_END
+
+foreach my $sample (@samples) {
+    $analysis_out->print( <<XML_END );
+\t\t<SAMPLE_REF
+\t\t  refname="$sample->{'id'}"
+\t\t  refcenter="%%SAMPLE_CENTER_NAME%%" />
+XML_END
+}
+
+$analysis_out->print( <<XML_END );
+\t\t<ANALYSIS_TYPE>
+\t\t\t<SEQUENCE_ASSEMBLY>
+\t\t\t\t<NAME>%%ASSEMBLY_NAME%%</NAME>
+\t\t\t\t<PARTIAL>%%ASSEMBLY_IS_PARTIAL%%</PARTIAL>
+\t\t\t\t<COVERAGE>%%ASSEMBLY_COVERAGE%%</COVERAGE>
+\t\t\t\t<PROGRAM>%%ASSEMBLY_PROGRAM_AND_VERSION%%</PROGRAM>
+\t\t\t\t<PLATFORM>%%ASSEMBLY_PLATFORM%%</PLATFORM>
+\t\t\t</SEQUENCE_ASSEMBLY>
+\t\t</ANALYSIS_TYPE>
+\t\t<FILES>
+\t\t\t<FILE
+\t\t\t  filename="$new_flatfile_path"
+\t\t\t  filetype="%%FILE_FILETYPE%%"
+\t\t\t  checksum_method="MD5"
+\t\t\t  checksum="%%FILE_CHECKSUM%%" />
+\t\t</FILES>
+\t</ANALYSIS>
+</ANALYSIS_SET>
+XML_END
+
