@@ -47,46 +47,46 @@ use Data::Dumper;    # For debugging only
 my $flatfile_path = $ARGV[0];
 
 if ( !defined($flatfile_path) ) {
-    croak("!!> Expected name of data flat file on command line!");
+    croak("!> Expected name of data flat file on command line!");
 }
 elsif ( !-f $flatfile_path ) {
     croak(
-        sprintf( "!!> Can not find flat file '%s'!", $flatfile_path ) );
+         sprintf( "!> Can not find flat file '%s'!", $flatfile_path ) );
 }
 
 my ( $flatfile, $datadir ) = fileparse($flatfile_path);
 
-printf( "==> Files are created in '%s'.\n", $datadir );
+printf( "=> Files are created in '%s'.\n", $datadir );
 
 if ( !-f catfile( $datadir, "study.xml" ) ) {
-    croak( sprintf( "!!> Can not find study XML file '%s'!",
+    croak( sprintf( "!> Can not find study XML file '%s'!",
                     catfile( $datadir, "study.xml" ) ) );
 }
 elsif ( !-f catfile( $datadir, "sample.xml" ) ) {
-    croak( sprintf( "!!> Can not find sample XML file '%s'!",
+    croak( sprintf( "!> Can not find sample XML file '%s'!",
                     catfile( $datadir, "sample.xml" ) ) );
 }
 
-print("==> Calling 'submit.pl' to submit study and sample(s)...\n");
+print("=> Calling 'submit.pl' to submit study and sample(s)...\n");
 
 # The following is commented out while developing:
 #system( "./submit.pl -c submit.conf.dist --action ADD " .
 #"$datadir/study.xml $datadir/sample.xml >$datadir/submit.out" );
 
 if ( !-f catfile( $datadir, "submit.out" ) ) {
-    croak("!!> Failed to create submit.pl output file 'submit.out'!");
+    croak("!> Failed to create submit.pl output file 'submit.out'!");
 }
 elsif ( -z catfile( $datadir, "submit.out" ) ) {
-    croak("!!> Output file 'submit.out' from submit.pl is empty!");
+    croak("!> Output file 'submit.out' from submit.pl is empty!");
 }
 else {
-    print("==> Ok.\n");
+    print("=> Ok.\n");
 }
 
 my $submit_in =
   IO::File->new( catfile( $datadir, "submit.out" ), "r" ) or
   croak(
-     sprintf( "!!> Failed to open 'submit.out' for reading: %s", $! ) );
+      sprintf( "!> Failed to open 'submit.out' for reading: %s", $! ) );
 
 my @study;
 my @samples;
@@ -111,18 +111,18 @@ $submit_in->close();
 
 my $new_flatfile_path = catfile( $datadir, "submit-" . $flatfile );
 
-printf( "==> Now creating '%s' from '%s', " .
+printf( "=> Now creating '%s' from '%s', " .
           "replacing locus tags with ENA IDs...\n",
         "submit-" . $flatfile, $flatfile );
 
 my $flatfile_in = IO::File->new( $flatfile_path, "r" )
   or
-  croak( sprintf( "!!> Failed to open '%s' for reading: %s",
+  croak( sprintf( "!> Failed to open '%s' for reading: %s",
                   $flatfile_path, $! ) );
 
 my $flatfile_out = IO::File->new( $new_flatfile_path, "w" )
   or
-  croak( sprintf( "!!> Failed to open '%s' for writing: %s",
+  croak( sprintf( "!> Failed to open '%s' for writing: %s",
                   $new_flatfile_path, $! ) );
 
 ##print Dumper( \@study, \@samples );    # DEBUG
@@ -139,24 +139,24 @@ while ( my $line = $flatfile_in->getline() ) {
 $flatfile_in->close();
 $flatfile_out->close();
 
-printf( "==> Compressing data file 'submit-%s' using gzip...\n",
+printf( "=> Compressing data file 'submit-%s' using gzip...\n",
         $flatfile );
 
 system( "gzip", "--force", "--best",
         catfile( $datadir, 'submit-' . $flatfile ) );
 
-printf( "==> Submitting data file 'submit-%s.gz' to ENA...\n",
+printf( "=> Submitting data file 'submit-%s.gz' to ENA...\n",
         $flatfile );
 
 system( "./submit.pl", "-c", "submit.conf.dist", "--upload",
         "--debug", catfile( $datadir, 'submit-' . $flatfile . '.gz' ) );
 
-print("==> Creating analysis XML template...\n");
+print("=> Creating analysis XML template...\n");
 
 my $analysis_out =
   IO::File->new( catfile( $datadir, "analysis.xml" ), "w" )
   or
-  croak( sprintf( "!!> Failed to open '%s' for writing: %s",
+  croak( sprintf( "!> Failed to open '%s' for writing: %s",
                   catfile( $datadir, "analysis.xml" ), $! ) );
 
 $analysis_out->print( <<XML_END );
@@ -201,8 +201,8 @@ $analysis_out->print( <<XML_END );
 </ANALYSIS_SET>
 XML_END
 
-print("==> All done.\n");
-printf( "==> Fill out '%s' and submit it with the command\n",
+print("=> All done.\n");
+printf( "=> Fill out '%s' and submit it with the command\n",
         catfile( $datadir, "analysis.xml" ) );
 printf( "\t./submit.pl [options] -a ADD %s\n",
         catfile( $datadir, "analysis.xml" ) );
