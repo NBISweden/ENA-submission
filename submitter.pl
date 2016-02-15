@@ -88,7 +88,7 @@ my $submit_in =
   croak(
       sprintf( "!> Failed to open 'submit.out' for reading: %s", $! ) );
 
-my @study;
+my $study;
 my @samples;
 
 while ( my $line = $submit_in->getline() ) {
@@ -97,7 +97,7 @@ while ( my $line = $submit_in->getline() ) {
     my @fields = split( /\t/, $line );
 
     if ( $line =~ /^study/ ) {
-        push( @study, { 'alias' => $fields[1], 'id' => $fields[2] } );
+        $study = { 'alias' => $fields[1], 'id' => $fields[2] };
     }
     elsif ( $line =~ /^sample/ ) {
         push( @samples,
@@ -178,7 +178,7 @@ $analysis_out->print( <<XML_END );
 \t\t<TITLE>%%ANALYSIS_TITLE%%</TITLE>
 \t\t<DESCRIPTION>%%ANALYSIS_DESCRIPTION%%</DESCRIPTION>
 \t\t<STUDY_REF
-\t\t  refname="%%STUDY_REFNAME%%"
+\t\t  refname="$study->{'id'}"
 \t\t  refcenter="%%STUDY_CENTER_NAME%%" />
 XML_END
 
