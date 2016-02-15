@@ -43,6 +43,10 @@ use Data::Dumper;    # For debugging only
 #   4.  It is assumed that the alias of the sample is the prefix of the
 #       "locus_tag" in the flat file data, i.e. that an alias of "RZ63"
 #       corresponds to locus tags "RZ63_*".
+#
+# 5.    This script doesn't currently support multiple samples from
+#       *different* centers, i.e. all samples must have the same
+#       "center_name" attribute in the sample XML file.
 
 my $flatfile_path = $ARGV[0];
 
@@ -150,6 +154,27 @@ printf( "=> Submitting data file 'submit-%s.gz' to ENA...\n",
 system( "./submit.pl", "-c", "submit.conf.dist", "--upload",
         "--debug", $new_flatfile_path . '.gz' );
 
+my %miscinfo;
+foreach my $file (qw( study sample )) {
+    printf( "=> Getting misc %s info...\n", $file );
+    my $file_in =
+      IO::File->new( catfile( $datadir, $file . '.xml' ), "r" )
+      or
+      croak( sprintf( "!> Failed to open '%s' for reading: %s",
+                      catfile( $datadir, $file . '.xml' ), $! ) );
+
+    while ( my $line = $file_in->getline() ) {
+        if ( $line =~ /center_name="([^"]+)"/ ) {
+            $miscinfo{$file}{'center_name'} = $1;
+            last;
+        }
+    }
+
+    $file_in->close();
+}
+
+print Dumper( \%miscinfo );    # DEBUG
+
 print("=> Creating analysis XML template...\n");
 
 my $digest_in = IO::File->new( $new_flatfile_path . '.gz.md5', "r" )
@@ -178,14 +203,14 @@ $analysis_out->print( <<XML_END );
 \t\t<DESCRIPTION>%%ANALYSIS_DESCRIPTION%%</DESCRIPTION>
 \t\t<STUDY_REF
 \t\t  refname="$study->{'id'}"
-\t\t  refcenter="%%STUDY_CENTER_NAME%%" />
+\t\t  refcenter="$miscinfo{'study'}{'center_name'}" />
 XML_END
 
 foreach my $sample (@samples) {
     $analysis_out->print( <<XML_END );
 \t\t<SAMPLE_REF
 \t\t  refname="$sample->{'id'}"
-\t\t  refcenter="%%SAMPLE_CENTER_NAME%%" />
+\t\t  refcenter="$miscinfo{'sample'}{'center_name'}" />
 XML_END
 }
 
