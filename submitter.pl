@@ -143,13 +143,13 @@ printf( "=> Compressing data file 'submit-%s' using gzip...\n",
         $flatfile );
 
 system( "gzip", "--force", "--best",
-        catfile( $datadir, 'submit-' . $flatfile ) );
+        $new_flatfile_path);
 
 printf( "=> Submitting data file 'submit-%s.gz' to ENA...\n",
         $flatfile );
 
 system( "./submit.pl", "-c", "submit.conf.dist", "--upload",
-        "--debug", catfile( $datadir, 'submit-' . $flatfile . '.gz' ) );
+        "--debug", $new_flatfile_path . '.gz' );
 
 print("=> Creating analysis XML template...\n");
 
