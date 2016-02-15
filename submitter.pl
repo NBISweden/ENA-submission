@@ -142,8 +142,7 @@ $flatfile_out->close();
 printf( "=> Compressing data file 'submit-%s' using gzip...\n",
         $flatfile );
 
-system( "gzip", "--force", "--best",
-        $new_flatfile_path);
+system( "gzip", "--force", "--best", $new_flatfile_path );
 
 printf( "=> Submitting data file 'submit-%s.gz' to ENA...\n",
         $flatfile );
