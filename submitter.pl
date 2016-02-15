@@ -153,6 +153,16 @@ system( "./submit.pl", "-c", "submit.conf.dist", "--upload",
 
 print("=> Creating analysis XML template...\n");
 
+my $digest_in = IO::File->new( $new_flatfile_path . '.gz.md5', "r" )
+  or
+  croak( sprintf( "!> Failed to open '%s.gz.md5' for reading: %s",
+                  $new_flatfile_path, $! ) );
+
+my $digest = $digest_in->getline();
+chomp($digest);
+
+$digest_in->close();
+
 my $analysis_out =
   IO::File->new( catfile( $datadir, "analysis.xml" ), "w" )
   or
@@ -192,10 +202,10 @@ $analysis_out->print( <<XML_END );
 \t\t</ANALYSIS_TYPE>
 \t\t<FILES>
 \t\t\t<FILE
-\t\t\t  filename="$new_flatfile_path"
+\t\t\t  filename="$new_flatfile_path.gz"
 \t\t\t  filetype="%%FILE_FILETYPE%%"
 \t\t\t  checksum_method="MD5"
-\t\t\t  checksum="%%FILE_CHECKSUM%%" />
+\t\t\t  checksum="$digest" />
 \t\t</FILES>
 \t</ANALYSIS>
 </ANALYSIS_SET>
