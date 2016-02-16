@@ -8,8 +8,8 @@ use strict;
 use warnings;
 
 use Carp;
-use Config::Simple;
-use Data::Dumper;    # for debugging only
+use Config::Tiny;
+#use Data::Dumper;    # for debugging only
 use Digest::MD5;
 use File::Basename;
 use File::Spec::Functions qw( splitpath catfile );
@@ -484,9 +484,11 @@ sub get_config
         exit(1);
     }
 
-    my $config = Config::Simple->new($opt_config);
+    my $config = Config::Tiny->read($opt_config);
 
-    my $profile_block = $config->param( -block => $profile );
+    ##print Dumper($config);    # DEBUG
+
+    my $profile_block = $config->{$opt_profile};
 
     ##print Dumper($profile_block);    # DEBUG
 
