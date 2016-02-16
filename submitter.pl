@@ -44,9 +44,12 @@ use Data::Dumper;    # For debugging only
 #       "locus_tag" in the flat file data, i.e. that an alias of "RZ63"
 #       corresponds to locus tags "RZ63_*".
 #
-# 5.    This script doesn't currently support multiple samples from
+#   5.  This script doesn't currently support multiple samples from
 #       *different* centers, i.e. all samples must have the same
 #       "center_name" attribute in the sample XML file.
+#
+#   6.  The study 'center_name' will be used as the analysis
+#       'center_name' in the analysis XML template generated.
 
 my $flatfile_path = $ARGV[0];
 
@@ -62,13 +65,13 @@ my ( $flatfile, $datadir ) = fileparse($flatfile_path);
 
 printf( "=> Files are created in '%s'.\n", $datadir );
 
-if ( !-f catfile( $datadir, "study.xml" ) ) {
+if ( !-f catfile( $datadir, 'study.xml' ) ) {
     croak( sprintf( "!> Can not find study XML file '%s'!",
-                    catfile( $datadir, "study.xml" ) ) );
+                    catfile( $datadir, 'study.xml' ) ) );
 }
-elsif ( !-f catfile( $datadir, "sample.xml" ) ) {
+elsif ( !-f catfile( $datadir, 'sample.xml' ) ) {
     croak( sprintf( "!> Can not find sample XML file '%s'!",
-                    catfile( $datadir, "sample.xml" ) ) );
+                    catfile( $datadir, 'sample.xml' ) ) );
 }
 
 print("=> Calling 'submit.pl' to submit study and sample(s)...\n");
@@ -76,10 +79,10 @@ print("=> Calling 'submit.pl' to submit study and sample(s)...\n");
 system( "./submit.pl --action ADD " .
         "$datadir/study.xml $datadir/sample.xml >$datadir/submit.out" );
 
-if ( !-f catfile( $datadir, "submit.out" ) ) {
+if ( !-f catfile( $datadir, 'submit.out' ) ) {
     croak("!> Failed to create submit.pl output file 'submit.out'!");
 }
-elsif ( -z catfile( $datadir, "submit.out" ) ) {
+elsif ( -z catfile( $datadir, 'submit.out' ) ) {
     croak("!> Output file 'submit.out' from submit.pl is empty!");
 }
 else {
@@ -87,7 +90,7 @@ else {
 }
 
 my $submit_in =
-  IO::File->new( catfile( $datadir, "submit.out" ), "r" ) or
+  IO::File->new( catfile( $datadir, 'submit.out' ), "r" ) or
   croak(
       sprintf( "!> Failed to open 'submit.out' for reading: %s", $! ) );
 
@@ -146,11 +149,11 @@ $flatfile_out->close();
 printf( "=> Compressing data file '%s' using gzip...\n",
         $new_flatfile );
 
-system( "gzip", "--force", "--best", $new_flatfile_path );
+system( 'gzip', '--force', '--best', $new_flatfile_path );
 
 printf( "=> Submitting data file '%s.gz' to ENA...\n", $new_flatfile );
 
-system( "./submit.pl", "--upload", $new_flatfile_path . '.gz' );
+system( './submit.pl', '--upload', $new_flatfile_path . '.gz' );
 
 my %miscinfo;
 foreach my $file (qw( study sample )) {
@@ -186,10 +189,10 @@ chomp($digest);
 $digest_in->close();
 
 my $analysis_out =
-  IO::File->new( catfile( $datadir, "analysis.xml" ), "w" )
+  IO::File->new( catfile( $datadir, 'analysis.xml' ), "w" )
   or
   croak( sprintf( "!> Failed to open '%s' for writing: %s",
-                  catfile( $datadir, "analysis.xml" ), $! ) );
+                  catfile( $datadir, 'analysis.xml' ), $! ) );
 
 $analysis_out->print( <<XML_END );
 <?xml version="1.0" encoding="utf-8"?>
@@ -250,6 +253,6 @@ XML_END
 
 print("=> All done.\n");
 printf( "=> Fill out '%s' and submit it with the command\n",
-        catfile( $datadir, "analysis.xml" ) );
-printf( "\t./submit.pl [options] -a ADD %s\n",
-        catfile( $datadir, "analysis.xml" ) );
+        catfile( $datadir, 'analysis.xml' ) );
+printf( "\t./submit.pl [maybe other options] -a ADD %s\n",
+        catfile( $datadir, 'analysis.xml' ) );
