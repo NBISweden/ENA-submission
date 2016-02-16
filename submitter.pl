@@ -73,9 +73,8 @@ elsif ( !-f catfile( $datadir, "sample.xml" ) ) {
 
 print("=> Calling 'submit.pl' to submit study and sample(s)...\n");
 
-# The following is commented out while developing:
-#system( "./submit.pl -c submit.conf.dist --action ADD " .
-#"$datadir/study.xml $datadir/sample.xml >$datadir/submit.out" );
+system( "./submit.pl --action ADD " .
+        "$datadir/study.xml $datadir/sample.xml >$datadir/submit.out" );
 
 if ( !-f catfile( $datadir, "submit.out" ) ) {
     croak("!> Failed to create submit.pl output file 'submit.out'!");
@@ -113,11 +112,12 @@ while ( my $line = $submit_in->getline() ) {
 
 $submit_in->close();
 
-my $new_flatfile_path = catfile( $datadir, "submit-" . $flatfile );
+my $new_flatfile = 'submit-' . $flatfile;
+my $new_flatfile_path = catfile( $datadir, $new_flatfile );
 
 printf( "=> Now creating '%s' from '%s', " .
           "replacing locus tags with ENA IDs...\n",
-        "submit-" . $flatfile, $flatfile );
+        $new_flatfile, $flatfile );
 
 my $flatfile_in = IO::File->new( $flatfile_path, "r" )
   or
@@ -143,16 +143,14 @@ while ( my $line = $flatfile_in->getline() ) {
 $flatfile_in->close();
 $flatfile_out->close();
 
-printf( "=> Compressing data file 'submit-%s' using gzip...\n",
-        $flatfile );
+printf( "=> Compressing data file '%s' using gzip...\n",
+        $new_flatfile );
 
 system( "gzip", "--force", "--best", $new_flatfile_path );
 
-printf( "=> Submitting data file 'submit-%s.gz' to ENA...\n",
-        $flatfile );
+printf( "=> Submitting data file '%s.gz' to ENA...\n", $new_flatfile );
 
-system( "./submit.pl", "-c", "submit.conf.dist", "--upload",
-        "--debug", $new_flatfile_path . '.gz' );
+system( "./submit.pl", "--upload", $new_flatfile_path . '.gz' );
 
 my %miscinfo;
 foreach my $file (qw( study sample )) {
@@ -173,7 +171,7 @@ foreach my $file (qw( study sample )) {
     $file_in->close();
 }
 
-print Dumper( \%miscinfo );    # DEBUG
+##print Dumper( \%miscinfo );    # DEBUG
 
 print("=> Creating analysis XML template...\n");
 
@@ -198,18 +196,18 @@ $analysis_out->print( <<XML_END );
 <ANALYSIS_SET>
 \t<ANALYSIS
 \t  alias="%%ANALYSIS_ALIAS%%"
-\t  center_name="%%CENTER_NAME%%">
+\t  center_name="$miscinfo{'study'}{'center_name'}">
 \t\t<TITLE>%%ANALYSIS_TITLE%%</TITLE>
 \t\t<DESCRIPTION>%%ANALYSIS_DESCRIPTION%%</DESCRIPTION>
 \t\t<STUDY_REF
-\t\t  refname="$study->{'id'}"
+\t\t  refname="$study->{'alias'}"
 \t\t  refcenter="$miscinfo{'study'}{'center_name'}" />
 XML_END
 
 foreach my $sample (@samples) {
     $analysis_out->print( <<XML_END );
 \t\t<SAMPLE_REF
-\t\t  refname="$sample->{'id'}"
+\t\t  refname="$sample->{'alias'}"
 \t\t  refcenter="$miscinfo{'sample'}{'center_name'}" />
 XML_END
 }
@@ -218,21 +216,36 @@ $analysis_out->print( <<XML_END );
 \t\t<ANALYSIS_TYPE>
 \t\t\t<SEQUENCE_ASSEMBLY>
 \t\t\t\t<NAME>%%ASSEMBLY_NAME%%</NAME>
-\t\t\t\t<PARTIAL>%%ASSEMBLY_IS_PARTIAL%%</PARTIAL>
-\t\t\t\t<COVERAGE>%%ASSEMBLY_COVERAGE%%</COVERAGE>
+\t\t\t\t<PARTIAL>%%ASSEMBLY_IS_PARTIAL_TRUE_OR_FALSE%%</PARTIAL>
+\t\t\t\t<COVERAGE>%%ASSEMBLY_COVERAGE_INTEGER_PERCENT%%</COVERAGE>
 \t\t\t\t<PROGRAM>%%ASSEMBLY_PROGRAM_AND_VERSION%%</PROGRAM>
 \t\t\t\t<PLATFORM>%%ASSEMBLY_PLATFORM%%</PLATFORM>
 \t\t\t</SEQUENCE_ASSEMBLY>
 \t\t</ANALYSIS_TYPE>
 \t\t<FILES>
 \t\t\t<FILE
-\t\t\t  filename="$new_flatfile_path.gz"
+\t\t\t  filename="$new_flatfile.gz"
 \t\t\t  filetype="%%FILE_FILETYPE%%"
 \t\t\t  checksum_method="MD5"
 \t\t\t  checksum="$digest" />
 \t\t</FILES>
 \t</ANALYSIS>
 </ANALYSIS_SET>
+
+<!--
+ Controlled vocabulary for filetype (for "%%FILE_FILETYPE%%"):
+ "contig_fasta"
+ "contig_flatfile"
+ "scaffold_fasta"
+ "scaffold_flatfile"
+ "scaffold_agp"
+ "chromosome_fasta"
+ "chromosome_flatfile"
+ "chromosome_agp"
+ "chromosome_list"
+ "unlocalised_contig_list"
+ "unlocalised_scaffold_list"
+-->
 XML_END
 
 print("=> All done.\n");
