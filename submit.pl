@@ -478,7 +478,8 @@ sub get_config
     ##print Dumper( \%default_values );    # DEBUG
 
     if ( !-f $opt_config ) {
-        printf( "!!> ERROR: The specified configuration file '%s' " .
+        printf( STDERR
+                  "!!> ERROR: The specified configuration file '%s' " .
                   "was not found\n",
                 $opt_config );
         exit(1);
@@ -493,7 +494,7 @@ sub get_config
     ##print Dumper($profile_block);    # DEBUG
 
     if ( scalar( keys( %{$profile_block} ) ) == 0 ) {
-        printf( "!!> ERROR: Configuration profile '%s' " .
+        printf( STDERR "!!> ERROR: Configuration profile '%s' " .
                   "is missing in '%s'\n",
                 $profile, $opt_config );
         exit(1);
@@ -515,7 +516,7 @@ sub get_config
     my $error = 0;
     for ( my $si = 0; $si < scalar(@settings); ++$si ) {
         if ( !defined( $values[$si] ) ) {
-            printf( "!!> ERROR: Unable to find setting '%s' " .
+            printf( STDERR "!!> ERROR: Unable to find setting '%s' " .
                       "for profile '%s' in '%s'\n",
                     $settings[$si], $profile, $opt_config );
             $error = 1;
