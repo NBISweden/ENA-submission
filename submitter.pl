@@ -158,7 +158,8 @@ my $flatfile_out = IO::File->new( $new_flatfile_path, "w" )
 
 while ( my $line = $flatfile_in->getline() ) {
     foreach my $sample (@samples) {
-        my ( $alias, $id ) = ( $sample->{'alias'}, $sample->{'id'} );
+        my ( $alias, $id ) =
+          ( $sample->{'alias'}, $sample->{'id'} );
         if ( $line =~ s/$alias/$id/ ) { last }
     }
 
