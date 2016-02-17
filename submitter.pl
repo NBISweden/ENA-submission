@@ -8,7 +8,7 @@ use File::Basename;
 use File::Spec::Functions;
 use IO::File;
 
-use Data::Dumper;    # For debugging only
+#use Data::Dumper;    # For debugging only
 
 # This is a wrapper around the submit.pl Perl script.
 #
@@ -51,7 +51,10 @@ use Data::Dumper;    # For debugging only
 #   6.  The study 'center_name' will be used as the analysis
 #       'center_name' in the analysis XML template generated.
 
-my $flatfile_path = $ARGV[0];
+my $flatfile_path = pop(@ARGV);
+my @other_options = @ARGV;
+
+##print Dumper( $flatfile_path, \@other_options );    # DEBUG
 
 if ( !defined($flatfile_path) ) {
     croak("!> Expected name of data flat file on command line!");
@@ -92,12 +95,14 @@ MESSAGE_END
 
 if ( $reply =~ /^n/i ) {
     system( "./submit.pl --action ADD " .
-           "$datadir/study.xml $datadir/sample.xml >$datadir/submit.out"
+          join( ' ', @other_options ) .
+          " $datadir/study.xml $datadir/sample.xml >$datadir/submit.out"
     );
 }
 elsif ( $reply =~ /^m/i ) {
     system( "./submit.pl --action MODIFY " .
-           "$datadir/study.xml $datadir/sample.xml >$datadir/submit.out"
+          join( ' ', @other_options ) .
+          " $datadir/study.xml $datadir/sample.xml >$datadir/submit.out"
     );
 }
 
@@ -176,7 +181,8 @@ system( 'gzip', '--force', '--best', $new_flatfile_path );
 
 printf( "=> Submitting data file '%s.gz' to ENA...\n", $new_flatfile );
 
-system( './submit.pl', '--upload', $new_flatfile_path . '.gz' );
+system( './submit.pl', @other_options, '--upload',
+        $new_flatfile_path . '.gz' );
 
 my %miscinfo;
 foreach my $file (qw( study sample )) {
