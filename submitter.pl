@@ -263,6 +263,21 @@ $analysis_out->print( <<XML_END );
 \t\t</FILES>
 \t</ANALYSIS>
 </ANALYSIS_SET>
+
+<!--
+ Controlled vocabulary for filetype (%%FILE_FILETYPE%%):
+ "contig_fasta"
+ "contig_flatfile"
+ "scaffold_fasta"
+ "scaffold_flatfile"
+ "scaffold_agp"
+ "chromosome_fasta"
+ "chromosome_flatfile"
+ "chromosome_agp"
+ "chromosome_list"
+ "unlocalised_contig_list"
+ "unlocalised_scaffold_list"
+ -->
 XML_END
 
 print("=> All done.\n");
