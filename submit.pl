@@ -21,6 +21,7 @@ use Net::FTP;
 use POSIX qw( strftime );
 use Pod::Usage;
 use XML::Simple qw( :strict );
+use IO::Socket::SSL;
 
 # These are global variables
 #
@@ -158,7 +159,9 @@ sub do_data_upload
     my ( $username, $password ) =
       get_config( $opt_profile, 'username', 'password' );
 
-    my $ftp = Net::FTP->new( $ENA_WEBIN_FTP, Debug => $opt_debug );
+    my $ftp = Net::FTP->new( $ENA_WEBIN_FTP,
+                             Debug   => $opt_debug,
+                             Passive => 1 );
 
     $ftp->login( $username, $password )
       or
