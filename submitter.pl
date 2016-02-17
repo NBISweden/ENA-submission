@@ -76,8 +76,32 @@ elsif ( !-f catfile( $datadir, 'sample.xml' ) ) {
 
 print("=> Calling 'submit.pl' to submit study and sample(s)...\n");
 
-system( "./submit.pl --action ADD " .
-        "$datadir/study.xml $datadir/sample.xml >$datadir/submit.out" );
+my $reply = 'y';
+
+if ( -f catfile( $datadir, 'submit.out' ) &&
+     !-z catfile( $datadir, 'submit.out' ) )
+{
+    print <<MESSAGE_END;
+!> Found old output from submit.pl in '$datadir/sumbit.out'
+!> Should it be used?
+!>
+!>  y:  Yes, use the old data from submit.pl
+!>  n:  No, re-run submit.pl
+!>  m:  No, re-run, but use MODIFY instead of ADD.
+MESSAGE_END
+    $reply = <STDIN>;
+}
+
+if ( $reply =~ /^n/i ) {
+    system( "./submit.pl --action ADD " .
+           "$datadir/study.xml $datadir/sample.xml >$datadir/submit.out"
+    );
+}
+elsif ( $reply =~ /^m/i ) {
+    system( "./submit.pl --action MODIFY " .
+           "$datadir/study.xml $datadir/sample.xml >$datadir/submit.out"
+    );
+}
 
 if ( !-f catfile( $datadir, 'submit.out' ) ) {
     croak("!> Failed to create submit.pl output file 'submit.out'!");
