@@ -76,11 +76,9 @@ elsif ( !-f catfile( $datadir, 'sample.xml' ) ) {
 
 print("=> Calling 'submit.pl' to submit study and sample(s)...\n");
 
-my $reply = 'y';
+my $reply = 'n';
 
-if ( -f catfile( $datadir, 'submit.out' ) &&
-     !-z catfile( $datadir, 'submit.out' ) )
-{
+if ( -f catfile( $datadir, 'submit.out' ) ) {
     print <<MESSAGE_END;
 !> Found old output from submit.pl in '$datadir/sumbit.out'
 !> Should it be used?
