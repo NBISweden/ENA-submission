@@ -1,6 +1,9 @@
-The two scripts available in this folder, submit.pl and submitter.pl,
+The two main scripts available in this folder, submit.pl and submitter.pl,
 were written to make it easier to submit data to the European Nucleotide
 Archive (ENA) at the EMBL-EBI outside of Cambridge, UK.
+
+A thrid script, update_embl_file_checker.sh, downloads a tool from ENA
+for validating EMBL flat files.
 
 
 submit.pl
@@ -44,3 +47,28 @@ Steps performed by script:
 The user is then expected to fill out the remainder of the analysis
 file and to submit it manually to the ENA using the submit.pl script
 (submitter.pl will suggest a command line to do this).
+
+
+update_embl_file_checker.sh
+========================================================================
+
+The ENA provides a validation tool, embl-client.jar, for validating
+the contents of EMBL flat files.  The update_embl_file_checker.sh
+script downloads this tool (or updates an existing version
+of the tool).  More info about the validator may be found at
+http://www.ebi.ac.uk/ena/software/flat-file-validator
+
+You run the validator like this:
+
+    $ java -jar embl-client.jar mydata.embl
+
+The validator takes a bit of time to run, and upon completion creates a
+set of report text files that hopefully will help you modify and correct
+any possible errors in your data before submitting it to the ENA:
+
+    VAL_ERROR.txt
+    VAL_FIXES.txt
+    VAL_INFO.txt
+    VAL_REPORTS.txt
+    VAL_SUMMARY.txt
+
