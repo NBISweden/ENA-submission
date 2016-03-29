@@ -62,6 +62,11 @@ You run the validator like this:
 
     $ java -jar embl-client.jar mydata.embl
 
+... or, as the ENA suggests:
+
+    $ java -classpath embl-client.jar uk.ac.ebi.client.EnaValidator \
+        -r mydata.embl
+
 The validator takes a bit of time to run, and upon completion creates a
 set of report text files that hopefully will help you modify and correct
 any possible errors in your data before submitting it to the ENA:
