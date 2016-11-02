@@ -1,8 +1,15 @@
 #!/bin/sh
 
-# Please check the following URL for what the most current version is:
-# http://central.maven.org/maven2/uk/ac/ebi/ena/sequence/embl-api-validator/
-current_version="1.1.146"
+if which -s xml; then
+    # Use XMLStarlet to get the latest available version number.
+    current_version=$( curl http://central.maven.org/maven2/uk/ac/ebi/ena/sequence/embl-api-validator/maven-metadata.xml | xml sel -t -v '//latest' -nl )
+else
+    # We don't have XMLStarlet installed, so use a hard-coded value.
+
+    # Please check the following URL for what the most current version is:
+    # http://central.maven.org/maven2/uk/ac/ebi/ena/sequence/embl-api-validator/
+    current_version="1.1.146"
+fi
 
 # This script updates the JAR file "embl-validator.jar" in the
 # current directory.  The JAR file is ENA's flat-file validator for
