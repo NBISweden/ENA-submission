@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# Please check the following URL for what the most current version is:
+# http://central.maven.org/maven2/uk/ac/ebi/ena/sequence/embl-api-validator/
 current_version="1.1.146"
 
 # This script updates the JAR file "embl-validator.jar" in the
