@@ -49,22 +49,21 @@ file and to submit it manually to the ENA using the submit.pl script
 (submitter.pl will suggest a command line to do this).
 
 
-update_embl_file_checker.sh
+update_embl-validator.sh
 ========================================================================
 
-The ENA provides a validation tool, embl-client.jar, for validating
-the contents of EMBL flat files.  The update_embl_file_checker.sh
-script downloads this tool (or updates an existing version
-of the tool).  More info about the validator may be found at
-http://www.ebi.ac.uk/ena/software/flat-file-validator
+The ENA provides a validation tool for validating the contents of EMBL
+flat files.  The update_embl-validator.sh script downloads this tool (or
+updates an existing version of the tool).  More info about the validator
+may be found at http://www.ebi.ac.uk/ena/software/flat-file-validator
 
 You run the validator like this:
 
-    $ java -jar embl-client.jar mydata.embl
+    $ java -jar embl-validator.jar mydata.embl
 
 ... or, as the ENA suggests:
 
-    $ java -classpath embl-client.jar uk.ac.ebi.client.EnaValidator \
+    $ java -classpath embl-validator.jar uk.ac.ebi.client.EnaValidator \
         -r mydata.embl
 
 The validator takes a bit of time to run, and upon completion creates a
