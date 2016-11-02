@@ -168,6 +168,8 @@ sub do_data_upload
       croak( sprintf( "Can not 'login' on ENA FTP server: %s",
                       $ftp->message() ) );
 
+    $ftp->binary();
+
     foreach my $data_file (@data_files) {
         $ftp->put($data_file)
           or
