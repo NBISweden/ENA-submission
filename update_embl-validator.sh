@@ -13,8 +13,8 @@
 
 # If XMLStarlet is installed, the script is smart and get the latest
 # version, otherwise it tries to use sed to parse the meta data
-# available.  If either of these approaches fail, the value of 'current_version' below is
-# used.
+# available.  If either of these approaches fail, the value of
+# 'current_version' below is used.
 
 current_version="1.1.147"
 
