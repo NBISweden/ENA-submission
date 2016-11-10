@@ -7,20 +7,20 @@
 use strict;
 use warnings;
 
+#use Data::Dumper;    # for debugging only
 use Carp;
 use Config::Tiny;
-#use Data::Dumper;    # for debugging only
 use Digest::MD5;
 use File::Basename;
 use File::Spec::Functions qw( splitpath catfile );
 use Getopt::Long;
 use HTTP::Request::Common qw( POST );
 use IO::File;
+use IO::Socket::SSL;
 use LWP::UserAgent;
 use Net::FTP;
 use POSIX qw( strftime );
 use Pod::Usage;
-use IO::Socket::SSL;
 
 # These are global variables
 #
