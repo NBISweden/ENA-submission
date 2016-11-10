@@ -2,8 +2,8 @@ The two main scripts available in this folder, submit.pl and submitter.pl,
 were written to make it easier to submit data to the European Nucleotide
 Archive (ENA) at the EMBL-EBI outside of Cambridge, UK.
 
-A thrid script, update_embl_file_checker.sh, downloads a tool from ENA
-for validating EMBL flat files.
+A third script, update_embl-validator.sh, downloads a tool from ENA for
+validating EMBL flat files.
 
 
 submit.pl
