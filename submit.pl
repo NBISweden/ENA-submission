@@ -20,7 +20,6 @@ use LWP::UserAgent;
 use Net::FTP;
 use POSIX qw( strftime );
 use Pod::Usage;
-use XML::Simple qw( :strict );
 use IO::Socket::SSL;
 
 # These are global variables
