@@ -7,21 +7,21 @@
 use strict;
 use warnings;
 
-use Carp;
 use Config::Tiny;
-#use Data::Dumper;    # for debugging only
+use Data::Dumper;    # for debugging only
 use Digest::MD5;
 use File::Basename;
 use File::Spec::Functions qw( splitpath catfile );
 use Getopt::Long;
 use HTTP::Request::Common qw( POST );
 use IO::File;
+use IO::Socket::SSL;
 use LWP::UserAgent;
 use Net::FTP;
 use POSIX qw( strftime );
 use Pod::Usage;
-use XML::Simple qw( :strict );
-use IO::Socket::SSL;
+use XML::XPath::XMLParser;
+use XML::XPath;
 
 # These are global variables
 #
@@ -262,26 +262,11 @@ sub do_submission
         # Read each XML file to figure out what type of XML it contains.
         # Weed out any submission XML file.
 
-        my $xml =
-          XMLin( $xml_file,
-                 ForceArray => undef,
-                 KeyAttr    => '' );
+        my $xp = XML::XPath->new( 'filename' => $xml_file );
+        my $tag = lc( $xp->find('name(/*/*') );
 
-        ##die Dumper($xml);    # DEBUG
-
-        my @toplevel;
-        foreach my $toplevel ( keys( %{$xml} ) ) {
-            if ( $toplevel !~ /xsi|xmlns/ ) {
-                push( @toplevel, $toplevel );
-            }
-        }
-
-        ##print Dumper( \@toplevel );    # DEBUG
-
-        if ( scalar(@toplevel) == 1 && lc( $toplevel[0] ) ne 'actions' )
-        {
-            $schema_file_map{ $toplevel[0] } = {
-                                       'fullname' => $xml_file,
+        if ( $tag ne 'submission' ) {
+            $schema_file_map{$tag} = { 'dirname'  => dirname($xml_file),
                                        'basename' => basename($xml_file)
             };
         }
@@ -289,7 +274,7 @@ sub do_submission
             printf( STDERR "!!> WARNING: Skipping XML file '%s'\n",
                     $xml_file );
         }
-    } ## end foreach my $xml_file (@xml_files)
+    }
 
     ##die Dumper( \%actions, \%schema_file_map );    # DEBUG
 
@@ -362,7 +347,8 @@ sub do_submission
         Content      => [
             'SUBMISSION' => [$opt_out],
             map {
-                $_ => [ $schema_file_map{$_}{'fullname'} ]
+                $_ => [ catfile( $schema_file_map{$_}{'dirname'},
+                                 $schema_file_map{$_}{'basename'} ) ]
               }
               keys(%schema_file_map) ] );
 

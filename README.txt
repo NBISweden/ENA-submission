@@ -57,6 +57,8 @@ flat files.  The update_embl-validator.sh script downloads this tool (or
 updates an existing version of the tool).  More info about the validator
 may be found at http://www.ebi.ac.uk/ena/software/flat-file-validator
 
+The validator needs to be run separately.
+
 You run the validator like this:
 
     $ java -jar embl-validator.jar mydata.embl
