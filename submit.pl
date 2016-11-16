@@ -367,40 +367,20 @@ sub do_submission
         print( STDERR "==> HTTPS request successful\n" );
     }
 
-    my $response_xml = XMLin( $response->decoded_content(),
-                              ForceArray => undef,
-                              KeyAttr    => undef );
-
-    ##print Dumper($response_xml);    # DEBUG
+    my $response_xml = $response->decoded_content();
+    my $xp = XML::XPath->new( 'xml' => $response_xml );
 
     if ( !$opt_quiet ) {
-        if ( ref( $response_xml->{'MESSAGES'}{'INFO'} ) eq 'ARRAY' ) {
-            foreach
-              my $reply ( @{ $response_xml->{'MESSAGES'}{'INFO'} } )
-            {
-                printf( STDERR "==> ENA says: %s\n", $reply );
-            }
+        print( STDERR "==> ENA says:\n" );
+        foreach my $node ( $xp->findnodes('//MESSAGES/INFO') ) {
+            printf( STDERR "==> INFO: %s\n", $node->string_value() );
         }
-        else {
-            printf( STDERR "==> ENA says: %s\n",
-                    $response_xml->{'MESSAGES'}{'INFO'} );
-        }
-        print( STDERR "\n" );
     }
 
-    if ( $response_xml->{'success'} eq 'false' ) {
-        if ( ref( $response_xml->{'MESSAGES'}{'ERROR'} ) eq 'ARRAY' ) {
-            my $error_count = 0;
-            foreach my $error_message (
-                             @{ $response_xml->{'MESSAGES'}{'ERROR'} } )
-            {
-                printf( STDERR "!!> ERROR #%d: Submission failed: %s\n",
-                        ++$error_count, $error_message );
-            }
-        }
-        else {
-            printf( STDERR "!!> ERROR: Submission failed: %s\n",
-                    $response_xml->{'MESSAGES'}{'ERROR'} );
+    if ( $xp->getNodeText('/RECEIPT/@success') eq 'false' ) {
+
+        foreach my $node ( $xp->findnodes('//MESSAGES/ERROR') ) {
+            printf( STDERR "!!> ERROR: %s\n", $node->string_value() );
         }
         exit(1);
     }
