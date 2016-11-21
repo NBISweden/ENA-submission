@@ -1,5 +1,5 @@
 VAL_*
 config.local
-submission.xml
 embl-validator.jar
+submission.xml
 t/
