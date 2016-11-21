@@ -1,0 +1,224 @@
+#!/bin/bash
+
+## EXTERNAL DEPENDENCIES:
+##  - XML Starlet ("xml")
+##  - Curl ("curl")
+##  - GNU Date ("gdate")
+
+ENA_TEST_URL="https://www-test.ebi.ac.uk/ena/submit/drop-box/submit"
+ENA_PRODUCTION_URL="https://www.ebi.ac.uk/ena/submit/drop-box/submit"
+ENA_WEBIN_FTP="webin.ebi.ac.uk"
+
+function xml_init_submission
+{
+    # Creates an empty submission XML file in the current directory.
+
+    cat >submission.xml <<XML_END
+<SUBMISSION>
+</SUBMISSION>
+XML_END
+
+    # Add the 'alias' and 'centre_name' attributes as well as an empty
+    # "ACTIONS" subnode.
+
+    submission_alias="${username}_$(date -u +"%Y%m%d:%H%M%S")"
+
+    xml ed --inplace \
+        -i "/SUBMISSION" -t attr -n "alias" -v "$submission_alias" \
+        -i "/SUBMISSION" -t attr -n "center_name" -v "$center_name" \
+        -s "/SUBMISSION" -t elem -n "ACTIONS" \
+        submission.xml
+}
+
+function xml_action
+{
+    # Adds an (empty) action to an existing submission XML file.
+    # Parameters: $1 = type of action (ADD, MODIFY, HOLD, etc.)
+
+    xml ed --inplace \
+        -s "/SUBMISSION/ACTIONS" -t elem -n "ACTION" \
+        -s "//ACTION[last()]" -t elem -n "$1" \
+        submission.xml
+}
+
+function xml_add
+{
+    # Adds an ADD action.
+    # Parameters: $1 = XML file basename, $2 = schema
+
+    xml_action "ADD"
+    xml ed --inplace \
+        -i "//ACTION[last()]/ADD" -t attr -n "source" -v "$1" \
+        -i "//ACTION[last()]/ADD" -t attr -n "schema" -v "$2" \
+        submission.xml
+}
+
+function xml_modify
+{
+    # Adds a MODIFY action.
+    # Parameters: $1 = XML file basename, $2 = schema
+
+    xml_action "MODIFY"
+    xml ed --inplace \
+        -i "//ACTION[last()]/MODIFY" -t attr -n "source" -v "$1" \
+        -i "//ACTION[last()]/MODIFY" -t attr -n "schema" -v "$2" \
+        submission.xml
+}
+
+function xml_hold
+{
+    # Adds a HOLD action.
+    # Parameters: $1 = date
+
+    xml_action "HOLD"
+    xml ed --inplace \
+        -i "//ACTION[last()]/HOLD" -t attr -n "HoldUntilDate" -v "$1" \
+        submission.xml
+}
+
+function xml_cancel
+{
+    # Adds a CANCEL action.
+    # Parameters: $1 = accession to cancel
+
+    xml_add_action "CANCEL"
+    xml ed --inplace \
+        -i "//ACTION[last()]/CANCEL" -t attr -n "target" -v "$1" \
+        submission.xml
+}
+
+# Read 'username', 'password' and 'center_name' from configuration file.
+
+if [[ ! -f config ]]; then
+    echo "Can not find configuration file 'config'" >&2
+    exit 1
+fi
+
+username="$( sed -n 's/^username *//p' config )"
+password="$( sed -n 's/^password *//p' config )"
+center_name="$( sed -n 's/^center_name *//p' config )"
+
+# Make sure the data file is there.
+
+data_path="$1"
+if [[ ! -f "$data_path" ]]; then
+    printf "Can not find data file '%s'\n" "$data_path" >&2
+    exit 1
+fi
+
+data_dirname="$( dirname "$data_path" )"
+data_basename="$( basename "$data_path" )"
+
+# Make sure that the sample and study XML files are located in the same
+# directory as the data file.
+
+for xml_file in "study.xml" "sample.xml"; do
+    if [[ ! -f "$data_dirname/$xml_file" ]]; then
+        printf "Can not find '%s' in directory '%s'\n" \
+            "$xml_file" "$data_dirname" >&2
+        error=1
+    fi
+done
+
+if (( error )); then
+    exit 1
+fi
+
+# Figure out what to do with the given XML files.
+
+echo "MENU:"
+
+select opt in \
+    "ADD the sample and study XML files" \
+    "MODIFY already submitted sample and study XML files" \
+    "CANCEL unpublished submission" \
+    "SUPRESS an already public submission" \
+    "Exit this utility"; do
+    case $REPLY in
+        1)  action="ADD"
+            break   ;;
+        2)  action="MODIFY"
+            break   ;;
+        3)  action="CANCEL"
+            break   ;;
+        4)  action="SUPRESS"
+            break   ;;
+        5)  exit 0  ;;
+    esac
+done
+
+# Create the submission XML file.
+
+xml_init_submission
+case "$action" in
+    ADD)
+        xml_add "sample.xml" "sample"
+        xml_add "study.xml" "study"
+        xml_hold "$(date -u -v +2y +"%Y-%m-%dZ")"
+        ;;
+    MODIFY)
+        xml_modify "sample.xml" "sample"
+        xml_modify "study.xml" "study"
+        xml_hold "$(date -u -v +2y +"%Y-%m-%dZ")"
+        ;;
+esac
+
+#xml_cancel "ERP019913"
+#xml_cancel "ERS1452958"
+
+# Make submission.
+
+if ! curl --silent --fail --insecure \
+    -o submission-response.xml.raw \
+    -F "SUBMISSION=@submission.xml" \
+    -F "STUDY=@$data_dirname/study.xml" \
+    -F "SAMPLE=@$data_dirname/sample.xml" \
+    "$ENA_TEST_URL?auth=ENA%20$username%20$password"
+then
+    echo "Curl failed to submit the XML files" >&2
+    exit 1
+fi
+
+xml fo submission-response.xml.raw >submission-response.xml
+
+success="$( xml sel -t -v '/RECEIPT/@success' submission-response.xml )"
+
+xml sel -t -v '//MESSAGES/INFO' -nl submission-response.xml
+xml sel -t -v '//MESSAGES/ERROR' -nl submission-response.xml
+
+if [[ "$success" = "false" ]]; then
+    cat >&2 <<MESSAGE_END
+
+STATUS: Submission failed, please refer to the messages that ENA gave
+STATUS: as the response to the submission (above).  Consult the file
+STATUS: "submission-response.xml" for the formatted XML response, or the
+STATUS: file "submission-response.xml.raw" for the unformatted raw XML.
+MESSAGE_END
+    exit 1
+fi
+
+sample_id="$( xml sel -t -v //SAMPLE/@accession submission-response.xml )"
+study_id="$( xml sel -t -v //STUDY/@accession submission-response.xml )"
+
+printf "Sample accession is '%s'\n" "$sample_id"
+printf "Study accession is '%s'\n" "$study_id"
+
+sample_alias="$( xml sel -t -v '//SAMPLE/@alias' "$data_dirname/sample.xml" )"
+
+new_data_path="$data_dirname/new-$data_basename"
+
+printf "Replacing '%s' with '%s' in '%s', creating '%s'...\n" \
+    "$sample_alias" "$sample_id" \
+    "$data_path" "$new_data_path"
+
+sed "s/$sample_alias/$sample_id/g" \
+    "$data_path" > "$new_data_path"
+
+printf "Compressing '%s'...\n" "$new_data_path"
+gzip --best -v "$new_data_path"
+md5sum
+
+printf "Submitting '%s.gz' to ENA's FTP server...\n" "new_data_path"
+
+
+#vim: ft=sh
