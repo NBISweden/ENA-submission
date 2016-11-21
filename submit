@@ -211,6 +211,7 @@ printf "Study accession is '%s'\n" "$study_id"
 sample_alias="$( xml sel -t -v '//SAMPLE/@alias' "$data_dirname/sample.xml" )"
 
 new_data_path="$data_dirname/new-$data_basename"
+new_data_basename="$( basename "$new_data_path" )"
 
 printf "Replacing '%s' with '%s' in '%s', creating '%s'...\n" \
     "$sample_alias" "$sample_id" \
@@ -221,9 +222,13 @@ sed "s/$sample_alias/$sample_id/g" \
 
 printf "Compressing '%s'...\n" "$new_data_path"
 gzip --best -v "$new_data_path"
-md5sum
+md5sum "$new_data_path.gz" >"$new_data_path.gz.md5"
 
-printf "Submitting '%s.gz' to ENA's FTP server...\n" "new_data_path"
+printf "Submitting '%s.gz' and its MD5 checksum to ENA's FTP server...\n" \
+    "$new_data_path"
+
+ftp -u "ftp://$username:$password@$ENA_WEBIN_FTP" \
+    "$new_data_path.gz" "$new_data_path.gz.md5"
 
 
 #vim: ft=sh
