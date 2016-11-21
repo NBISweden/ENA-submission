@@ -5,6 +5,10 @@
 ##  - Curl ("curl")
 ##  - GNU Date ("date")
 
+# Until XML Starlet is installed centrally on UPPMAX:
+function xml {
+    command /home/andrek/sw/bin/xml "$@"
+}
 
 ENA_TEST_URL="https://www-test.ebi.ac.uk/ena/submit/drop-box/submit"
 ENA_PRODUCTION_URL="https://www.ebi.ac.uk/ena/submit/drop-box/submit"
