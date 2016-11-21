@@ -227,8 +227,11 @@ md5sum "$new_data_path.gz" >"$new_data_path.gz.md5"
 printf "Submitting '%s.gz' and its MD5 checksum to ENA's FTP server...\n" \
     "$new_data_path"
 
-ftp -u "ftp://$username:$password@$ENA_WEBIN_FTP" \
-    "$new_data_path.gz" "$new_data_path.gz.md5"
-
+ftp -n "$ENA_WEBIN_FTP" <<FTP_END
+user $username $password
+binary
+put $new_data_path.gz
+put $new_data_path.gz.md5
+FTP_END
 
 #vim: ft=sh
