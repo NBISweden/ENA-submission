@@ -3,7 +3,8 @@
 ## EXTERNAL DEPENDENCIES:
 ##  - XML Starlet ("xml")
 ##  - Curl ("curl")
-##  - GNU Date ("gdate")
+##  - GNU Date ("date")
+
 
 ENA_TEST_URL="https://www-test.ebi.ac.uk/ena/submit/drop-box/submit"
 ENA_PRODUCTION_URL="https://www.ebi.ac.uk/ena/submit/drop-box/submit"
@@ -154,12 +155,12 @@ case "$action" in
     ADD)
         xml_add "sample.xml" "sample"
         xml_add "study.xml" "study"
-        xml_hold "$(date -u -v +2y +"%Y-%m-%dZ")"
+        xml_hold "$(date -u -d "+2years" +"%Y-%m-%dZ")"
         ;;
     MODIFY)
         xml_modify "sample.xml" "sample"
         xml_modify "study.xml" "study"
-        xml_hold "$(date -u -v +2y +"%Y-%m-%dZ")"
+        xml_hold "$(date -u -d "+2years" +"%Y-%m-%dZ")"
         ;;
 esac
 
@@ -168,7 +169,7 @@ esac
 
 # Make submission.
 
-if ! curl --silent --fail --insecure \
+if ! curl --fail --insecure \
     -o submission-response.xml.raw \
     -F "SUBMISSION=@submission.xml" \
     -F "STUDY=@$data_dirname/study.xml" \
