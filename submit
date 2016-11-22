@@ -26,7 +26,7 @@ XML_END
     xmlstarlet ed --inplace \
         -i "/SUBMISSION" -t attr -n "alias" -v "$submission_alias" \
         -i "/SUBMISSION" -t attr -n "center_name" -v "$center_name" \
-        -s "/SUBMISSION" -t elem -n "ACTIONS" \
+        -s "/SUBMISSION" -t elem -n "ACTIONS" -v '' \
         submission.xml
 }
 
@@ -36,8 +36,8 @@ function xml_action
     # Parameters: $1 = type of action (ADD, MODIFY, HOLD, etc.)
 
     xmlstarlet ed --inplace \
-        -s "/SUBMISSION/ACTIONS" -t elem -n "ACTION" \
-        -s "//ACTION[last()]" -t elem -n "$1" \
+        -s "/SUBMISSION/ACTIONS" -t elem -n "ACTION" -v '' \
+        -s "//ACTION[last()]" -t elem -n "$1" -v '' \
         submission.xml
 }
 
