@@ -205,13 +205,28 @@ fi
 # the value of the "ENA_ID" tag.
 
 for t in study sample; do
-
     id="$( xmlstarlet sel -t -v //${t^^}/@accession submission-response.xml )"
-
     printf "%s accession is '%s'\n" "${t^}" "$id"
-done
 
-exit
+    # Don't do this if the XML already has an attribute tag named "ENA_ID".
+    old_id="$( xmlstarlet sel -t -v "//${t^^}_ATTRIBUTE/VALUE[../TAG='ENA_ID']" "$data_dirname/$t.xml" )"
+
+    if [[ -z "$old_id" ]]; then
+        xmlstarlet ed --inplace \
+            -s "//${t^^}_ATTRIBUTES" \
+            -t elem -n "${t^^}_ATTRIBUTE" -v '' \
+            -s "//${t^^}_ATTRIBUTE[last()]" \
+            -t elem -n 'TAG' -v 'ENA_ID' \
+            -s "//${t^^}_ATTRIBUTE[last()]" \
+            -t elem -n 'VALUE' -v "$id" "$data_dirname/$t.xml"
+    fi
+
+    # Save the sample ID in its own variable, we'll need it for
+    # substituting the sample alias in the flat file later.
+    if [[ "$t" == "sample" ]]; then
+        sample_id="$id"
+    fi
+done
 
 sample_alias="$( xmlstarlet sel -t -v '//SAMPLE/@alias' "$data_dirname/sample.xml" )"
 
