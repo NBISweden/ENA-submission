@@ -126,11 +126,17 @@ fi
 
 # Figure out what to do with the given XML files.
 
-echo "MENU:"
+cat <<MESSAGE_END
+This tool will create and submit a submission XML for the European
+Nucleotide Archive (ENA).  Once the XML is submitted, the flat file
+provided on the command line ("$data_path") will also be submitted.
+------------------------------------------------------------------------
+MESSAGE_END
+
 
 select opt in \
-    "ADD the sample and study XML files" \
-    "MODIFY already submitted sample and study XML files" \
+    "Submit ADDITTION of study and sample XML files" \
+    "Submit MODIFIED already submitted XML files" \
     "CANCEL unpublished submission" \
     "SUPRESS an already public submission" \
     "Exit this utility"; do
@@ -147,21 +153,19 @@ select opt in \
     esac
 done
 
+
 # Create the submission XML file.
 
 xml_init_submission
-case "$action" in
-    ADD)
-        xml_add "sample.xml" "sample"
-        xml_add "study.xml" "study"
-        xml_hold "$(date -u -d "+2years" +"%Y-%m-%dZ")"
-        ;;
-    MODIFY)
-        xml_modify "sample.xml" "sample"
-        xml_modify "study.xml" "study"
-        xml_hold "$(date -u -d "+2years" +"%Y-%m-%dZ")"
-        ;;
-esac
+
+for f in study sample; do
+    case "$action" in
+        ADD)    xml_add "$f.xml" "$f"       ;;
+        MODIFY) xml_modify "$f.xml" "$f"    ;;
+    esac
+done
+
+xml_hold "$(date -u -d "+2years" +"%Y-%m-%dZ")"
 
 #xml_cancel "ERP019913"
 #xml_cancel "ERS1452958"
