@@ -65,6 +65,18 @@ function xml_modify
         submission.xml
 }
 
+function xml_validate
+{
+    # Adds a VALIDATE action.
+    # Parameters: $1 = XML file basename, $2 = schema
+
+    xml_action "VALIDATE"
+    xmlstarlet ed --inplace \
+        -i "//ACTION[last()]/VALIDATE" -t attr -n "source" -v "$1" \
+        -i "//ACTION[last()]/VALIDATE" -t attr -n "schema" -v "$2" \
+        submission.xml
+}
+
 function xml_hold
 {
     # Adds a HOLD action.
@@ -137,19 +149,13 @@ MESSAGE_END
 select opt in \
     "Submit ADDITTION of study and sample XML files" \
     "Submit MODIFIED already submitted XML files" \
-    "CANCEL unpublished submission" \
-    "SUPRESS an already public submission" \
     "Exit this utility"; do
     case $REPLY in
         1)  action="ADD"
             break   ;;
         2)  action="MODIFY"
             break   ;;
-        3)  action="CANCEL"
-            break   ;;
-        4)  action="SUPRESS"
-            break   ;;
-        5)  exit 0  ;;
+        6)  exit 0  ;;
     esac
 done
 
@@ -160,15 +166,15 @@ xml_init_submission
 
 for f in study sample; do
     case "$action" in
-        ADD)    xml_add "$f.xml" "$f"       ;;
-        MODIFY) xml_modify "$f.xml" "$f"    ;;
+        ADD)        xml_add         "$f.xml" "$f"   ;;
+        MODIFY)     xml_modify      "$f.xml" "$f"   ;;
+        VALIDATE)   xml_validate    "$f.xml" "$f"   ;;
     esac
 done
 
-xml_hold "$(date -u -d "+2years" +"%Y-%m-%dZ")"
-
-#xml_cancel "ERP019913"
-#xml_cancel "ERS1452958"
+if [[ "$action" != "VALIDATE" ]]; then
+    xml_hold "$(date -u -d "+2years" +"%Y-%m-%dZ")"
+fi
 
 # Make submission.
 
