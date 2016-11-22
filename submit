@@ -1,14 +1,9 @@
 #!/bin/bash
 
 ## EXTERNAL DEPENDENCIES:
-##  - XML Starlet ("xml")
+##  - XML Starlet ("xmlstarlet")
 ##  - Curl ("curl")
 ##  - GNU Date ("date")
-
-# Until XML Starlet is installed centrally on UPPMAX:
-function xml {
-    command /home/andrek/sw/bin/xml "$@"
-}
 
 ENA_TEST_URL="https://www-test.ebi.ac.uk/ena/submit/drop-box/submit"
 ENA_PRODUCTION_URL="https://www.ebi.ac.uk/ena/submit/drop-box/submit"
@@ -28,7 +23,7 @@ XML_END
 
     submission_alias="${username}_$(date -u +"%Y%m%d:%H%M%S")"
 
-    xml ed --inplace \
+    xmlstarlet ed --inplace \
         -i "/SUBMISSION" -t attr -n "alias" -v "$submission_alias" \
         -i "/SUBMISSION" -t attr -n "center_name" -v "$center_name" \
         -s "/SUBMISSION" -t elem -n "ACTIONS" \
@@ -40,7 +35,7 @@ function xml_action
     # Adds an (empty) action to an existing submission XML file.
     # Parameters: $1 = type of action (ADD, MODIFY, HOLD, etc.)
 
-    xml ed --inplace \
+    xmlstarlet ed --inplace \
         -s "/SUBMISSION/ACTIONS" -t elem -n "ACTION" \
         -s "//ACTION[last()]" -t elem -n "$1" \
         submission.xml
@@ -52,7 +47,7 @@ function xml_add
     # Parameters: $1 = XML file basename, $2 = schema
 
     xml_action "ADD"
-    xml ed --inplace \
+    xmlstarlet ed --inplace \
         -i "//ACTION[last()]/ADD" -t attr -n "source" -v "$1" \
         -i "//ACTION[last()]/ADD" -t attr -n "schema" -v "$2" \
         submission.xml
@@ -64,7 +59,7 @@ function xml_modify
     # Parameters: $1 = XML file basename, $2 = schema
 
     xml_action "MODIFY"
-    xml ed --inplace \
+    xmlstarlet ed --inplace \
         -i "//ACTION[last()]/MODIFY" -t attr -n "source" -v "$1" \
         -i "//ACTION[last()]/MODIFY" -t attr -n "schema" -v "$2" \
         submission.xml
@@ -76,7 +71,7 @@ function xml_hold
     # Parameters: $1 = date
 
     xml_action "HOLD"
-    xml ed --inplace \
+    xmlstarlet ed --inplace \
         -i "//ACTION[last()]/HOLD" -t attr -n "HoldUntilDate" -v "$1" \
         submission.xml
 }
@@ -87,7 +82,7 @@ function xml_cancel
     # Parameters: $1 = accession to cancel
 
     xml_add_action "CANCEL"
-    xml ed --inplace \
+    xmlstarlet ed --inplace \
         -i "//ACTION[last()]/CANCEL" -t attr -n "target" -v "$1" \
         submission.xml
 }
@@ -184,12 +179,12 @@ then
     exit 1
 fi
 
-xml fo submission-response.xml.raw >submission-response.xml
+xmlstarlet fo submission-response.xml.raw >submission-response.xml
 
-success="$( xml sel -t -v '/RECEIPT/@success' submission-response.xml )"
+success="$( xmlstarlet sel -t -v '/RECEIPT/@success' submission-response.xml )"
 
-xml sel -t -v '//MESSAGES/INFO' -nl submission-response.xml
-xml sel -t -v '//MESSAGES/ERROR' -nl submission-response.xml
+xmlstarlet sel -t -v '//MESSAGES/INFO' -nl submission-response.xml
+xmlstarlet sel -t -v '//MESSAGES/ERROR' -nl submission-response.xml
 
 if [[ "$success" = "false" ]]; then
     cat >&2 <<MESSAGE_END
@@ -202,13 +197,13 @@ MESSAGE_END
     exit 1
 fi
 
-sample_id="$( xml sel -t -v //SAMPLE/@accession submission-response.xml )"
-study_id="$( xml sel -t -v //STUDY/@accession submission-response.xml )"
+sample_id="$( xmlstarlet sel -t -v //SAMPLE/@accession submission-response.xml )"
+study_id="$( xmlstarlet sel -t -v //STUDY/@accession submission-response.xml )"
 
 printf "Sample accession is '%s'\n" "$sample_id"
 printf "Study accession is '%s'\n" "$study_id"
 
-sample_alias="$( xml sel -t -v '//SAMPLE/@alias' "$data_dirname/sample.xml" )"
+sample_alias="$( xmlstarlet sel -t -v '//SAMPLE/@alias' "$data_dirname/sample.xml" )"
 
 new_data_path="$data_dirname/new-$data_basename"
 new_data_basename="$( basename "$new_data_path" )"
