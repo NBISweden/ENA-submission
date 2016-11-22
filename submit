@@ -145,7 +145,6 @@ provided on the command line ("$data_path") will also be submitted.
 ------------------------------------------------------------------------
 MESSAGE_END
 
-
 select opt in \
     "Submit ADDITTION of study and sample XML files" \
     "Submit MODIFIED already submitted XML files" \
@@ -158,7 +157,6 @@ select opt in \
         6)  exit 0  ;;
     esac
 done
-
 
 # Create the submission XML file.
 
@@ -211,40 +209,57 @@ fi
 # the value of the "ENA_ID" tag.
 
 for t in study sample; do
-    id="$( xmlstarlet sel -t -v //${t^^}/@accession submission-response.xml )"
-    printf "%s accession is '%s'\n" "${t^}" "$id"
+    oldIFS="$IFS"
+    IFS=$'\n'
 
-    # Don't do this if the XML already has an attribute tag named "ENA_ID".
-    old_id="$( xmlstarlet sel -t -v "//${t^^}_ATTRIBUTE/VALUE[../TAG='ENA_ID']" "$data_dirname/$t.xml" )"
+    ids=( $( xmlstarlet sel -t -v "//${t^^}/@accession" submission-response.xml ) )
+    als=( $( xmlstarlet sel -t -v "//${t^^}/@alias" submission-response.xml ) )
 
-    if [[ -z "$old_id" ]]; then
-        xmlstarlet ed --inplace \
-            -s "//${t^^}_ATTRIBUTES" \
-            -t elem -n "${t^^}_ATTRIBUTE" -v '' \
-            -s "//${t^^}_ATTRIBUTE[last()]" \
-            -t elem -n 'TAG' -v 'ENA_ID' \
-            -s "//${t^^}_ATTRIBUTE[last()]" \
-            -t elem -n 'VALUE' -v "$id" "$data_dirname/$t.xml"
-    fi
+    for (( i=0; i<${#ids[@]}; ++i )); do
+        id="${ids[i]}"
+        alias="${als[i]}"
 
-    # Save the sample ID in its own variable, we'll need it for
-    # substituting the sample alias in the flat file later.
+        printf "%s accession is '%s', alias='%s'\n" "${t^}" "$id" "$alias"
+
+        node="//${t^^}[@alias='$alias']/${t^^}_ATTRIBUTES"
+
+        # Don't do this if the XML already has an attribute tag named "ENA_ID".
+        old_id="$( xmlstarlet sel -t -v "$node/${t^^}_ATTRIBUTE/VALUE[../TAG='ENA_ID']" "$data_dirname/$t.xml" )"
+
+        if [[ -z "$old_id" ]]; then
+            xmlstarlet ed --inplace \
+                -s "$node" \
+                -t elem -n "${t^^}_ATTRIBUTE" -v '' \
+                -s "$node/${t^^}_ATTRIBUTE[last()]" \
+                -t elem -n 'TAG' -v 'ENA_ID' \
+                -s "$node/${t^^}_ATTRIBUTE[last()]" \
+                -t elem -n 'VALUE' -v "$id" "$data_dirname/$t.xml"
+        fi
+    done
+
+    # Save the sample IDs and aliases in their own variables, we'll need
+    # them for substituting in the flat file later.
     if [[ "$t" == "sample" ]]; then
-        sample_id="$id"
+        sample_ids=( "${ids[@]}" )
+        sample_als=( "${als[@]}" )
     fi
-done
 
-sample_alias="$( xmlstarlet sel -t -v '//SAMPLE/@alias' "$data_dirname/sample.xml" )"
+    IFS="$oldIFS"
+done
 
 new_data_path="$data_dirname/new-$data_basename"
 new_data_basename="$( basename "$new_data_path" )"
 
-printf "Replacing '%s' with '%s' in '%s', creating '%s'...\n" \
-    "$sample_alias" "$sample_id" \
+printf "Replacing the locus tags in '%s', creating '%s'...\n" \
     "$data_path" "$new_data_path"
 
-sed "s/$sample_alias/$sample_id/g" \
-    "$data_path" > "$new_data_path"
+# Create a simple sed script to carry out all substitutions.
+for (( i=0; i<${#sample_ids[@]}; ++i )); do
+    printf "s/${sample_als[i]}/${sample_ids[i]}/g\n"
+done >substitutions.sed
+
+# Execute substitutions.
+sed -f substitutions.sed "$data_path" > "$new_data_path"
 
 printf "Compressing '%s'...\n" "$new_data_path"
 gzip --best -v "$new_data_path"
