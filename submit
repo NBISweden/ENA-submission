@@ -201,11 +201,17 @@ MESSAGE_END
     exit 1
 fi
 
-sample_id="$( xmlstarlet sel -t -v //SAMPLE/@accession submission-response.xml )"
-study_id="$( xmlstarlet sel -t -v //STUDY/@accession submission-response.xml )"
+# Put study and sample IDs inte original study and sample XML files as
+# the value of the "ENA_ID" tag.
 
-printf "Sample accession is '%s'\n" "$sample_id"
-printf "Study accession is '%s'\n" "$study_id"
+for t in study sample; do
+
+    id="$( xmlstarlet sel -t -v //${t^^}/@accession submission-response.xml )"
+
+    printf "%s accession is '%s'\n" "${t^}" "$id"
+done
+
+exit
 
 sample_alias="$( xmlstarlet sel -t -v '//SAMPLE/@alias' "$data_dirname/sample.xml" )"
 
