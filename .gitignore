@@ -1,4 +1,6 @@
+SRA.*.xsd
 VAL_*
-submission.xml
+config.local
 embl-validator.jar
+submission.xml
 t/
