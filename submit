@@ -336,11 +336,11 @@ xmlstarlet ed --inplace \
     -s "//ANALYSIS_TYPE" -t elem -n "SEQUENCE_ASSEMBLY" -v '' \
     -s "//SEQUENCE_ASSEMBLY" -t elem -n "NAME" -v "%%ASSEMBLY_NAME%%" \
     -s "//SEQUENCE_ASSEMBLY" -t elem -n "PARTIAL" \
-        -v "%%ASSEMBLY_IS_PARTIAL_YESNO%%" \
+        -v "%%ASSEMBLY_IS_PARTIAL%%" \
     -s "//SEQUENCE_ASSEMBLY" -t elem -n "COVERAGE" \
-        -v "%%ASSEMBLY_COVERAGE_INTEGER_PERCENT%%" \
+        -v "%%ASSEMBLY_COVERAGE%%" \
     -s "//SEQUENCE_ASSEMBLY" -t elem -n "PROGRAM" \
-        -v "%%ASSEMBLY_PROGRAM_AND_VERSION%%" \
+        -v "%%ASSEMBLY_PROGRAM%%" \
     -s "//SEQUENCE_ASSEMBLY" -t elem -n "PLATFORM" \
         -v "%%ASSEMBLY_PLATFORM%%" \
     analysis.xml
@@ -369,7 +369,7 @@ Controlled vocabulary for filetype (%%FILE_FILETYPE%%):
 -->
 XML_END
 
-cat <<MESSAGE_AND
+cat <<MESSAGE_END
 Done.
 
 The XML file 'analysis.xml' has been created.  This file
