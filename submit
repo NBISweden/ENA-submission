@@ -148,13 +148,16 @@ MESSAGE_END
 select opt in \
     "Submit ADDITTION of study and sample XML files" \
     "Submit MODIFIED already submitted XML files" \
+    "Submit completed analysis XML file" \
     "Exit this utility"; do
     case $REPLY in
         1)  action="ADD"
             break   ;;
         2)  action="MODIFY"
             break   ;;
-        6)  exit 0  ;;
+        3)  action="ANALYSIS"
+            break   ;;
+        4)  exit 0  ;;
     esac
 done
 
@@ -164,23 +167,33 @@ xml_init_submission
 
 for f in study sample; do
     case "$action" in
-        ADD)        xml_add         "$f.xml" "$f"   ;;
-        MODIFY)     xml_modify      "$f.xml" "$f"   ;;
-        VALIDATE)   xml_validate    "$f.xml" "$f"   ;;
+        ADD)    xml_add "$f.xml" "$f"
+                xml_hold "$(date -u -d "+2years" +"%Y-%m-%dZ")"
+                ;;
+        MODIFY) xml_modify "$f.xml" "$f"
+                xml_hold "$(date -u -d "+2years" +"%Y-%m-%dZ")"
+                ;;
     esac
 done
 
-if [[ "$action" != "VALIDATE" ]]; then
-    xml_hold "$(date -u -d "+2years" +"%Y-%m-%dZ")"
+if [[ "$action" == "ANALYSIS" ]]; then
+    xml_add "analysis.xml" "analysis"
 fi
 
 # Make submission.
 
+
+if [[ "$action" == "ANALYSIS" ]]; then
+    form="-F ANALYSIS=@analysis.xml"
+else
+    form="-F STUDY=@$data_dirname/study.xml \
+          -F SAMPLE=@$data_dirname/sample.xml"
+fi
+
 if ! curl --fail --insecure \
     -o submission-response.xml.raw \
     -F "SUBMISSION=@submission.xml" \
-    -F "STUDY=@$data_dirname/study.xml" \
-    -F "SAMPLE=@$data_dirname/sample.xml" \
+    $form \
     "$ENA_TEST_URL?auth=ENA%20$username%20$password"
 then
     echo "Curl failed to submit the XML files" >&2
@@ -203,6 +216,13 @@ STATUS: "submission-response.xml" for the formatted XML response, or the
 STATUS: file "submission-response.xml.raw" for the unformatted raw XML.
 MESSAGE_END
     exit 1
+else
+    echo "STATUS: Success."
+fi
+
+if [[ "$action" == "ANALYSIS" ]]; then
+    echo "The completed analysis has been submitted."
+    exit 0
 fi
 
 # Put study and sample IDs inte original study and sample XML files as
@@ -214,6 +234,7 @@ for t in study sample; do
 
     ids=( $( xmlstarlet sel -t -v "//${t^^}/@accession" submission-response.xml ) )
     als=( $( xmlstarlet sel -t -v "//${t^^}/@alias" submission-response.xml ) )
+
 
     for (( i=0; i<${#ids[@]}; ++i )); do
         id="${ids[i]}"
@@ -237,11 +258,21 @@ for t in study sample; do
         fi
     done
 
+    # Also get the centre_name out of the study and sample XMLs.
+    cns=( $( xmlstarlet sel -t -v "//${t^^}/@center_name" "$data_dirname/$t.xml" ) )
+
     # Save the sample IDs and aliases in their own variables, we'll need
-    # them for substituting in the flat file later.
+    # them for substituting in the flat file later. Do the same for the
+    # study (but whereas there may be many samples, there is only one
+    # study).
     if [[ "$t" == "sample" ]]; then
         sample_ids=( "${ids[@]}" )
         sample_als=( "${als[@]}" )
+        sample_cns=( "${cns[@]}" )
+    elif [[ "$t" == "study" ]]; then
+        study_id="$id"
+        study_al="$alias"
+        study_cn="${cns[0]}"
     fi
 
     IFS="$oldIFS"
@@ -274,5 +305,99 @@ binary
 put $new_data_path.gz $new_data_basename.gz
 put $new_data_path.gz.md5 $new_data_basename.gz.md5
 FTP_END
+
+echo "Creating analysis XML template"
+
+cat >analysis.xml <<XML_END
+<ANALYSIS_SET />
+XML_END
+
+xmlstarlet ed --inplace \
+    -s "/ANALYSIS_SET" -t elem -n "ANALYSIS" -v '' \
+    -i "//ANALYSIS" -t attr -n "alias" -v "%%ANALYSIS_ALIAS%%" \
+    -i "//ANALYSIS" -t attr -n "center_name" -v "$center_name" \
+    -s "//ANALYSIS" -t elem -n "TITLE" -v "%%ANALYSIS_TITLE%%" \
+    -s "//ANALYSIS" -t elem -n "DESCRIPTION" -v "%%ANALYSIS_DESCRIPTION%%" \
+    -s "//ANALYSIS" -t elem -n "STUDY_REF" -v '' \
+    -i "//STUDY_REF" -t attr -n "refname" -v "$study_al" \
+    -i "//STUDY_REF" -t attr -n "refcenter" -v "$study_cn" \
+    analysis.xml
+
+for (( i=0; i<${#sample_ids[@]}; ++i )); do
+    xmlstarlet ed --inplace \
+            -s "//ANALYSIS" -t elem -n "SAMPLE_REF" -v '' \
+            -i "//SAMPLE_REF[last()]" -t attr -n "refname" -v "${sample_als[i]}" \
+            -i "//SAMPLE_REF[last()]" -t attr -n "refcenter" -v "${sample_cns[i]}" \
+            analysis.xml
+done
+
+xmlstarlet ed --inplace \
+    -s "//ANALYSIS" -t elem -n "ANALYSIS_TYPE" -v '' \
+    -s "//ANALYSIS_TYPE" -t elem -n "SEQUENCE_ASSEMBLY" -v '' \
+    -s "//SEQUENCE_ASSEMBLY" -t elem -n "NAME" -v "%%ASSEMBLY_NAME%%" \
+    -s "//SEQUENCE_ASSEMBLY" -t elem -n "PARTIAL" \
+        -v "%%ASSEMBLY_IS_PARTIAL_YESNO%%" \
+    -s "//SEQUENCE_ASSEMBLY" -t elem -n "COVERAGE" \
+        -v "%%ASSEMBLY_COVERAGE_INTEGER_PERCENT%%" \
+    -s "//SEQUENCE_ASSEMBLY" -t elem -n "PROGRAM" \
+        -v "%%ASSEMBLY_PROGRAM_AND_VERSION%%" \
+    -s "//SEQUENCE_ASSEMBLY" -t elem -n "PLATFORM" \
+        -v "%%ASSEMBLY_PLATFORM%%" \
+    analysis.xml
+
+xmlstarlet ed --inplace \
+    -s "//ANALYSIS" -t elem -n "FILES" -v '' \
+    -s "//FILES" -t elem -n "FILE" -v '' \
+    -i "//FILE" -t attr -n "filename" -v "$data_basename" \
+    -i "//FILE" -t attr -n "filetype" -v "%%FILE_FILETYPE%%" \
+    -i "//FILE" -t attr -n "checksum_method" -v "MD5" \
+    -i "//FILE" -t attr -n "checksum" -v "$(<$new_data_path.gz.md5)" \
+    analysis.xml
+
+# Add controled vocabulary for filetype.
+
+cat >>analysis.xml <<XML_END
+
+<!--
+Controlled vocabulary for filetype (%%FILE_FILETYPE%%):
+    tab, bam, bai, cram, crai, vcf, vcf_aggregate, bcf, tabix, wig,
+    bed, gff, fasta, fastq, flatfile, contig_fasta, contig_flatfile,
+    scaffold_fasta, scaffold_flatfile, scaffold_agp, chromosome_fasta,
+    chromosome_flatfile, chromosome_agp, chromosome_list,
+    unlocalised_contig_list, unlocalised_scaffold_list, sample_list,
+    readme_file, phenotype_file, BioNano_native, other,
+-->
+XML_END
+
+cat <<MESSAGE_AND
+Done.
+
+The XML file 'analysis.xml' has been created.  This file
+contains placeholders for data that you must fill in.
+When the file is complete, please run this tool again and
+choose "Submit completed analysis XML file" from the menu.
+
+The placeholders are:
+
+    %%ANALYSIS_ALIAS%%          An alias (name) for the analysis.
+
+    %%ANALYSIS_TITLE%%          Title of the analysis which will be
+                                displayed in search results.
+
+    %%ANALYSIS_DESCRIPTION%%    Describes the analysis in detail.
+
+    %%ASSEMBLY_NAME%%           Name of assembly.
+
+    %%ASSEMBLY_IS_PARTIAL%%     One of {true, false, 1, 0}
+
+    %%ASSEMBLY_COVERAGE%%       Integer percent coverage.
+
+    %%ASSEMBLY_PROGRAM%%        Program and version of program.
+
+    %%ASSEMBLY_PLATFORM%%       Platform used.
+
+    %%FILE_FILETYPE%%           Please see comment in analysis.xml
+
+MESSAGE_END
 
 #vim: ft=sh
