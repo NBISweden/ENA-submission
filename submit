@@ -270,7 +270,7 @@ for t in study sample; do
         sample_als=( "${als[@]}" )
         sample_cns=( "${cns[@]}" )
     elif [[ "$t" == "study" ]]; then
-        study_id="$id"
+        study_id="$id"      # Unused.
         study_al="$alias"
         study_cn="${cns[0]}"
     fi
@@ -286,7 +286,7 @@ printf "Replacing the locus tags in '%s', creating '%s'...\n" \
 
 # Create a simple sed script to carry out all substitutions.
 for (( i=0; i<${#sample_ids[@]}; ++i )); do
-    printf "s/${sample_als[i]}/${sample_ids[i]}/g\n"
+    printf "s/%s/%s/g\n" "${sample_als[i]}" "${sample_ids[i]}"
 done >substitutions.sed
 
 # Execute substitutions.
@@ -351,7 +351,7 @@ xmlstarlet ed --inplace \
     -i "//FILE" -t attr -n "filename" -v "$data_basename" \
     -i "//FILE" -t attr -n "filetype" -v "%%FILE_FILETYPE%%" \
     -i "//FILE" -t attr -n "checksum_method" -v "MD5" \
-    -i "//FILE" -t attr -n "checksum" -v "$(<$new_data_path.gz.md5)" \
+    -i "//FILE" -t attr -n "checksum" -v "$(<"$new_data_path.gz.md5")" \
     analysis.xml
 
 # Add controled vocabulary for filetype.
