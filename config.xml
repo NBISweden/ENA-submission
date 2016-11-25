@@ -1,0 +1,5 @@
+<config>
+    <username>username-or-email</username>
+    <password>the-password</password>
+    <center_name>my-centre-name</center_name>
+</config>
