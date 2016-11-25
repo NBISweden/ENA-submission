@@ -16,17 +16,10 @@
 # available.  If either of these approaches fail, the value of
 # 'current_version' below is used.
 
-current_version="1.1.148"
+current_version="1.1.150"
 
-if which xml >/dev/null; then
-    # Use XMLStarlet to get the latest available version number.
-    curr_version=$( curl -s http://central.maven.org/maven2/uk/ac/ebi/ena/sequence/embl-api-validator/maven-metadata.xml | xml sel -t -v '//latest' -nl )
-
-else
-    # We don't have XMLStarlet installed, so hack it with sed instead.
-    curr_version=$( curl http://central.maven.org/maven2/uk/ac/ebi/ena/sequence/embl-api-validator/maven-metadata.xml | sed -n '/latest/s/^[^0-9.]*\([0-9.]*\)[^0-9.]*$/\1/' )
-
-fi
+# Use XMLStarlet to get the latest available version number.
+curr_version=$( curl -s http://central.maven.org/maven2/uk/ac/ebi/ena/sequence/embl-api-validator/maven-metadata.xml | xmlstarlet sel -t -v '//latest' -nl )
 
 if [ "x$curr_version" != "x" ]; then
     current_version="$curr_version"
