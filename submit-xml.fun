@@ -36,9 +36,7 @@ function init_xml
     #   stdin:  none
     #   stdout: XML
 
-    cat <<XML_END
-<$1 />
-XML_END
+    printf "<%s />" "$1"
 }
 
 function add_elem
