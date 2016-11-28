@@ -8,6 +8,7 @@ script_path="$( dirname "$0" )"
 
 source "$script_path"/submit-menus.fun
 source "$script_path"/submit-xml.fun
+source "$script_path"/submit-utils.fun
 
 # TODO: Add command line parsing here.
 
