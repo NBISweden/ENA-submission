@@ -17,14 +17,4 @@ if [[ ! -d "$data_dir" ]]; then
     exit 1
 fi
 
-# Examine the XML files in $data_dir to figure out what they are.
-# Creates the associative array xml_files with file names as keys and
-# the top-level XML element as values.
-
-declare -A xml_files
-
-for f in "$data_dir"/*.xml; do
-    xml_files["$(basename "$f")"]="$( xmlstarlet el "$f" | head -n 1 )"
-done
-
 main_menu
