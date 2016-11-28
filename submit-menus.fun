@@ -1,8 +1,8 @@
-# Bash shell functions that trives the menus.
+# Bash shell functions that drives the menus.
 
-function do_main_menu
+function main_menu
 {
-    # Main menu.
+    # Main menu (also, main loop).
 
     select actn in \
         "Submit an XML file" \

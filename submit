@@ -27,4 +27,4 @@ for f in "$data_dir"/*.xml; do
     xml_files["$(basename "$f")"]="$( xmlstarlet el "$f" | head -n 1 )"
 done
 
-do_main_menu
+main_menu
