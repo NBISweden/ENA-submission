@@ -19,7 +19,10 @@
 current_version="1.1.150"
 
 # Use XMLStarlet to get the latest available version number.
-curr_version=$( curl -s http://central.maven.org/maven2/uk/ac/ebi/ena/sequence/embl-api-validator/maven-metadata.xml | xmlstarlet sel -t -v '//latest' -nl )
+
+xmlstarlet="$( which xmlstarlet 2>/dev/null || which xml 2>/dev/null )"
+
+curr_version=$( curl -s http://central.maven.org/maven2/uk/ac/ebi/ena/sequence/embl-api-validator/maven-metadata.xml | "$xmlstarlet" sel -t -v '//latest' -nl )
 
 if [ "x$curr_version" != "x" ]; then
     current_version="$curr_version"
