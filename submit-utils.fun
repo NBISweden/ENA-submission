@@ -20,4 +20,21 @@ function display_state
     cat "$state_xml"
 }
 
+function make_submission
+{
+    # Given the name and type of an XML file, submits it to the ENA.
+    # The response from ENA is parsed and, if successfully submitted,
+    # the returned ENA IDs etc. is stored in the state XML file.
+
+    # Parameters:
+    #
+    #   1:  File name
+    #   2:  File type
+
+    case "$2" in
+        STUDY_SET)  ;;
+        SAMPLE_SET) ;;
+    esac
+}
+
 # vim: ft=sh
