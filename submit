@@ -6,6 +6,7 @@ script_path="$( dirname "$0" )"
 
 # Import our functions.
 
+source "$script_path"/submit-compat.fun
 source "$script_path"/submit-menus.fun
 source "$script_path"/submit-xml.fun
 source "$script_path"/submit-utils.fun

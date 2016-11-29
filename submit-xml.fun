@@ -9,18 +9,6 @@
 #   get_value '/hello/world/@done'
 
 
-# Figure out whether xmlstarlet is called "xmlstarlet" (as on UPPMAX) or
-# "xml" as on development machine.
-xmlstarlet="$( which xmlstarlet 2>/dev/null || which xml 2>/dev/null )"
-
-function xmlstarlet
-{
-    # Calls xmlstarlet.
-
-    "$xmlstarlet" "$@"
-}
-
-
 #-----------------------------------------------------------------------
 # Functions for adding things to XML.
 #-----------------------------------------------------------------------
