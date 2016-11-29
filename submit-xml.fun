@@ -6,7 +6,7 @@
 #   add_elem '/hello' 'world' |
 #   add_attr '//world' 'done' '1' |
 #   set_value '/hello/world/@done' 'ok' |
-#   get_value '/hello/world/@done
+#   get_value '/hello/world/@done'
 
 
 # Figure out whether xmlstarlet is called "xmlstarlet" (as on UPPMAX) or
@@ -17,7 +17,7 @@ function xmlstarlet
 {
     # Calls xmlstarlet.
 
-    $xmlstarlet "$@"
+    "$xmlstarlet" "$@"
 }
 
 
@@ -31,7 +31,7 @@ function init_xml
     #
     # Parameters:
     #
-    #   1:  Element name
+    #   1:  Root element name
     #
     #   stdin:  none
     #   stdout: XML
