@@ -30,7 +30,6 @@ function submit_menu
 {
     # Menu for submitting a single XML file.
 
-
     local -a choices
     local -a files
 
@@ -51,7 +50,7 @@ function submit_menu
                     local file="${files[$((REPLY - 2))]}"
                     printf "Submit '%s'?\n" "$file"
                     if [[ $( yesno_menu ) == "yes" ]]; then
-                        perform_submit 
+                        make_submission "$file" "${xml_files[$file]}"
                     fi
                 fi ;;
         esac
