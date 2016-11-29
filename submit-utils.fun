@@ -23,8 +23,9 @@ function display_state
 function make_submission
 {
     # Given the name and type of an XML file, submits it to the ENA.
-    # The response from ENA is parsed and, if successfully submitted,
-    # the returned ENA IDs etc. is stored in the state XML file.
+    # The response from ENA is parsed and, if the submission was
+    # successful, the returned ENA IDs etc. are stored in the state XML
+    # file.
 
     # Parameters:
     #
@@ -32,9 +33,31 @@ function make_submission
     #   2:  File type
 
     case "$2" in
-        STUDY_SET)  ;;
-        SAMPLE_SET) ;;
+        SAMPLE_SET) submit_sample "$1"  ;;
+        STUDY_SET)  submit_study "$1"   ;;
+        *)
+            printf "Submissions of '%s' are currently not implemented\n" \
+                "$2" >&2
+            ;;
     esac
+}
+
+function submit_sample
+{
+    # Submits a sample XML.
+    #
+    # Parameters:
+    #
+    #   1: XML file name
+
+    init_xml "SUBMISSION" |
+    add_attr "/SUBMISSION" "alias" "$username $timestamp" |
+    add_attr "/SUBMISSION" "center_name" "$center_name" |
+    add_elem "/SUBMISSION" "ACTIONS" |
+    add_elem "//ACTIONS" "ACTION" |
+    add_elem "//ACTION" "ADD" |
+    add_attr "//ADD" "source" "$1" |
+    add_attr "//ADD" "schema" "sample"
 }
 
 # vim: ft=sh
