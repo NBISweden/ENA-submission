@@ -18,7 +18,18 @@ if [[ ! -d "$data_dir" ]]; then
     exit 1
 fi
 
+# This is where we store the retrieved ENA IDs etc.
+
 state_xml="$data_dir/state.xml"
+
+# Get data from configuration file.  We currently assume that the
+# configuration file, config.xml, is available in the current directory.
+# We may change this later so that it's picked up from $data_dir
+# instead.
+
+username="$( get_value "/config/username" <config.xml )"
+password="$( get_value "/config/password" <config.xml )"
+center_name="$( get_value "/config/center_name" <config.xml )"
 
 # Examine the XML files in $data_dir to figure out what they are.
 # Creates the associative array xml_files with file names as keys and
