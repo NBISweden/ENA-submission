@@ -29,7 +29,8 @@ if [[ ! -f "$state_xml" ]]; then
     # Initialize the state XML file.
 
     init_xml "state" |
-    add_elem "/state" "created" "$timestamp" >"$state_xml"
+    add_elem "/state" "created" "$timestamp" |
+    add_elem "/state" "files" >"$state_xml"
 fi
 
 # Get data from configuration file.  We currently assume that the
@@ -56,6 +57,23 @@ for f in "$data_dir"/*.xml; do
     f_type="$( xmlstarlet el "$f" | head -n 1 )"
 
     xml_files["$f_basename"]="$f_type"
+done
+
+# Make sure each XML file is present in the state XML.
+
+for f in "${!xml_files[@]}"; do
+    data="$( get_value "//file[name='$f']" <"$state_xml" )"
+
+    if [[ -z "$data" ]]; then
+        # Insert file info into state XML.
+
+        tmpfile=$( mktemp )
+
+        add_elem "//files" "file" <"$state_xml" |
+        add_elem "//file[last()]" "name" "$f" >"$tmpfile"
+
+        mv -f "$tmpfile" "$state_xml"
+    fi
 done
 
 main_menu
