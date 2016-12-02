@@ -11,7 +11,7 @@ source "$script_path"/submit-menus.fun
 source "$script_path"/submit-xml.fun
 source "$script_path"/submit-utils.fun
 
-timestamp="$( date -u +"%Y%m%d %T" )"
+timestamp="$( date -u +"%F %T" )"
 
 # TODO: Add command line parsing here.
 
@@ -24,6 +24,13 @@ fi
 # This is where we store the retrieved ENA IDs etc.
 
 state_xml="$data_dir/state.xml"
+
+if [[ ! -f "$state_xml" ]]; then
+    # Initialize the state XML file.
+
+    init_xml "state" |
+    add_elem "/state" "created" "$timestamp" >"$state_xml"
+fi
 
 # Get data from configuration file.  We currently assume that the
 # configuration file, config.xml, is available in the current directory.
