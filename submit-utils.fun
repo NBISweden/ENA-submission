@@ -101,6 +101,8 @@ function process_submission
 
     # TODO: Submit with curl here.
     # TODO: Parse reply, put IDs in state XML (if successful).
+
+    true
 }
 
 # vim: ft=sh
