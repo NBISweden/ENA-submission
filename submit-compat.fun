@@ -1,6 +1,7 @@
 # Code and functions for portability and compatibility between systems.
 
-# Make sure we have GNU Date.
+# Make sure we have GNU Date.  Test it by calling it with '--version'
+# (the output shold mention "coreutils").
 
 date_cmd="$( which gdate 2>/dev/null || which date 2>/dev/null )"
 
