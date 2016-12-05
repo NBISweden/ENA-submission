@@ -7,10 +7,10 @@ function main_menu
     while true; do
 
         cat <<MENU_INFO_END
-------------------------------------------------------------------------
-You're at the main menu.  At any time, just press enter to re-display
-the current menu.
-------------------------------------------------------------------------
+    ========================================================================
+                            You're at the main menu.
+         At any time, just press enter to re-display the current menu.
+    ========================================================================
 MENU_INFO_END
 
         select thing in \
@@ -50,10 +50,10 @@ function submit_menu
     while true; do
 
         cat <<MENU_INFO_END
-------------------------------------------------------------------------
-You're at the 'submit' menu.  At any time, just press enter to
-re-display the current menu.
-------------------------------------------------------------------------
+    ------------------------------------------------------------------------
+                          You're at the 'submit' menu.
+         At any time, just press enter to re-display the current menu.
+    ------------------------------------------------------------------------
 MENU_INFO_END
 
         select thing in \
@@ -72,7 +72,9 @@ MENU_INFO_END
                     printf "Submit '%s'?\n" "$file"
                     if [[ $( yesno_menu ) == "yes" ]]; then
                         make_submission "$file" "${xml_files[$file]}"
-                    fi ;;
+                    fi
+
+                    break ;;    # to re-display the menu
             esac
         done
 
