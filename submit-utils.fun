@@ -9,10 +9,10 @@ function display_state
     # ENA.
     #
     # For now, it simply displays the raw contents of the state.xml
-    # file, if it exists.
+    # file.
 
     if [[ ! -f "$state_xml" ]]; then
-        printf "Can not find '%s'.  No submissions made yet?\n" "$state_xml"
+        printf "Can not find '%s'.\n" "$state_xml"
         return
     fi
 
