@@ -6,6 +6,13 @@ function main_menu
 
     while true; do
 
+        cat <<MENU_INFO_END
+------------------------------------------------------------------------
+You're at the main menu.  At any time, just press enter to re-display
+the current menu.
+------------------------------------------------------------------------
+MENU_INFO_END
+
         select thing in \
             "Exit" \
             "Submit an XML file" \
@@ -33,27 +40,42 @@ function submit_menu
     local -a choices
     local -a files
 
+    # Make menu from available XML files.
+
     for f in "${!xml_files[@]}"; do
         choices+=( "$( printf "Submit '%s' (%s)" "$f" "${xml_files[$f]}" )" )
         files+=( "$f" )
     done
 
-    select thing in \
-        "Go back to main menu" \
-        "${choices[@]}"
-    do
-        case "$REPLY" in
-            1)  break   ;;
-            *)  if (( REPLY - 1 > ${#files[@]})); then
-                    echo "Try again"
-                else
+    while true; do
+
+        cat <<MENU_INFO_END
+------------------------------------------------------------------------
+You're at the 'submit' menu.  At any time, just press enter to
+re-display the current menu.
+------------------------------------------------------------------------
+MENU_INFO_END
+
+        select thing in \
+            "Go back to the main menu" \
+            "${choices[@]}"
+        do
+            case "$REPLY" in
+                1)  return   ;;
+                *)  if [[ -z "$thing" ]]; then
+                        # Not a valid choice
+                        echo "Try again"
+                        break
+                    fi
+
                     local file="${files[$((REPLY - 2))]}"
                     printf "Submit '%s'?\n" "$file"
                     if [[ $( yesno_menu ) == "yes" ]]; then
                         make_submission "$file" "${xml_files[$file]}"
-                    fi
-                fi ;;
-        esac
+                    fi ;;
+            esac
+        done
+
     done
 }
 
@@ -66,19 +88,13 @@ function yesno_menu
     #   stdin:  none
     #   stdout: "yes" or "no"
 
-    local response
-
-    while true; do
-        printf "[Y]es/[N]o? > " >&2
-        read -r response
-
-        if [[ "$response" =~ ^[yY] ]]; then
-            echo "yes"
-            return
-        elif [[ "$response" =~ ^[nN] ]]; then
-            echo "no"
-            return
-        fi
+    select opt in "Yes" "No"; do
+        case "$REPLY" in
+            1)  echo "yes"
+                break   ;;
+            2)  echo "no"
+                break   ;;
+        esac
     done
 }
 
