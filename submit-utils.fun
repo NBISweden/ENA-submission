@@ -55,9 +55,9 @@ function submit_generic
     # "action" must be "MODIFY" rather than "ADD".
 
     local action
-    local submitted=$( get_value "/state/file[@name='$1']/@submitted" <"$state_xml" )
+    local submitted="$( get_value "//file[@name='$1']/submission" <"$state_xml" )"
 
-    if [[ "$submitted" != "true" ]]; then
+    if [[ -z "$submitted" ]]; then
         action="ADD"
     else
         action="MODIFY"
@@ -71,6 +71,17 @@ function submit_generic
     add_elem "//ACTION" "$action" |
     add_attr "//$action" "source" "$1" |
     add_attr "//$action" "schema" "$2"
+
+    # Update the state XML
+
+    tmpfile="$( mktemp )"
+
+    add_elem "//file[@name='$1']" \
+        "submission" "$username $timestamp" <"$state_xml" |
+    add_attr "//file[@name='$1']/submission[last()]" \
+        "action" "$action" >"$tmpfile"
+
+    mv -f "$tmpfile" "$state_xml"
 }
 
 # vim: ft=sh

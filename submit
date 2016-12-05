@@ -29,7 +29,7 @@ if [[ ! -f "$state_xml" ]]; then
     # Initialize the state XML file.
 
     init_xml "state" |
-    add_elem "/state" "created" "$timestamp" |
+    add_attr "/state" "created" "$timestamp" |
     add_elem "/state" "files" >"$state_xml"
 fi
 
@@ -62,7 +62,7 @@ done
 # Make sure each XML file is present in the state XML.
 
 for f in "${!xml_files[@]}"; do
-    data="$( get_value "//file[name='$f']" <"$state_xml" )"
+    data="$( get_value "//file[@name='$f']" <"$state_xml" )"
 
     if [[ -z "$data" ]]; then
         # Insert file info into state XML.
@@ -70,7 +70,7 @@ for f in "${!xml_files[@]}"; do
         tmpfile=$( mktemp )
 
         add_elem "//files" "file" <"$state_xml" |
-        add_elem "//file[last()]" "name" "$f" >"$tmpfile"
+        add_attr "//file[last()]" "name" "$f" >"$tmpfile"
 
         mv -f "$tmpfile" "$state_xml"
     fi
