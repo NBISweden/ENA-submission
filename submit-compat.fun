@@ -39,7 +39,7 @@ function xmlstarlet
 
 curl_cmd="$( which curl 2>/dev/null )"
 
-if [[ -z "$curl_xml" ]]; then
+if [[ -z "$curl_cmd" ]]; then
     echo "This tool requires Curl" >&2
     exit 1
 fi
