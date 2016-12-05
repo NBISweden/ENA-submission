@@ -72,6 +72,9 @@ function submit_generic
     add_attr "//$action" "source" "$1" |
     add_attr "//$action" "schema" "$2"
 
+    # TODO: Submit with curl here.
+    # TODO: Parse reply, put IDs in state XML (if successful).
+
     # Update the state XML
 
     tmpfile="$( mktemp )"
