@@ -54,14 +54,16 @@ function submit_generic
     # See if this file has been submitted before, in which case the
     # "action" must be "MODIFY" rather than "ADD".
 
-    local action
     local submitted="$( get_value "//file[@name='$1']/submission" <"$state_xml" )"
+    local action
 
     if [[ -z "$submitted" ]]; then
         action="ADD"
     else
         action="MODIFY"
     fi
+
+    # Create submission XML.
 
     init_xml "SUBMISSION" |
     add_attr "/SUBMISSION" "alias" "$username $timestamp" |
@@ -70,10 +72,9 @@ function submit_generic
     add_elem "//ACTIONS" "ACTION" |
     add_elem "//ACTION" "$action" |
     add_attr "//$action" "source" "$1" |
-    add_attr "//$action" "schema" "$2"
+    add_attr "//$action" "schema" "$2" >"$data_dir"/submission.xml
 
-    # TODO: Submit with curl here.
-    # TODO: Parse reply, put IDs in state XML (if successful).
+    process_submission
 
     # Update the state XML
 
@@ -85,6 +86,21 @@ function submit_generic
         "action" "$action" >"$tmpfile"
 
     mv -f "$tmpfile" "$state_xml"
+}
+
+function process_submission
+{
+    # Submits the submission XML file created by submit_generic and
+    # updates the state XML with the IDs that ENA gives us.  The state
+    # XML will also hold the submission status (the attribute "success"
+    # will be set to either "true" or "false").
+    #
+    # Parameters:
+    #
+    #   None
+
+    # TODO: Submit with curl here.
+    # TODO: Parse reply, put IDs in state XML (if successful).
 }
 
 # vim: ft=sh
