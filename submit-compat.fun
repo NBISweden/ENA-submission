@@ -30,9 +30,25 @@ fi
 
 function xmlstarlet
 {
-    # Calls xmlstarlet.
+    # Calls XML Starlet.
 
     command "$xmlstarlet_cmd" "$@"
+}
+
+# Make sure we have Curl.
+
+curl_cmd="$( which curl 2>/dev/null )"
+
+if [[ -z "$curl_xml" ]]; then
+    echo "This tool requires Curl" >&2
+    exit 1
+fi
+
+function curl
+{
+    # Calls Curl.
+
+    command "$curl_cmd" "$@"
 }
 
 # vim: ft=sh
