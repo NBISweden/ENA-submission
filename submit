@@ -4,6 +4,9 @@ set -e
 
 script_path="$( dirname "$0" )"
 
+# NOTE: ENA_TEST_URL is global.
+ENA_TEST_URL="https://www-test.ebi.ac.uk/ena/submit/drop-box/submit"
+
 # Import our functions.
 
 source "$script_path"/submit-compat.fun
@@ -13,9 +16,12 @@ source "$script_path"/submit-utils.fun
 
 timestamp="$( date -u +"%F %T" )"
 
-# TODO: Add command line parsing here.
+# TODO: Add command line parsing here whenever we know how we want this
+# to be used non-interactively.
 
+# NOTE: data_dir is global.
 data_dir="$1"
+
 if [[ ! -d "$data_dir" ]]; then
     printf "No such directory: %s\n" "$data_dir" >&2
     exit 1
@@ -23,6 +29,7 @@ fi
 
 # This is where we store the retrieved ENA IDs etc.
 
+# NOTE: state_xml is global.
 state_xml="$data_dir/state.xml"
 
 if [[ ! -f "$state_xml" ]]; then
@@ -38,6 +45,7 @@ fi
 # We may change this later so that it's picked up from $data_dir
 # instead.
 
+# NOTE: These three variables are global.
 username="$( get_value "/config/username" <config.xml )"
 password="$( get_value "/config/password" <config.xml )"
 center_name="$( get_value "/config/center_name" <config.xml )"
@@ -46,6 +54,7 @@ center_name="$( get_value "/config/center_name" <config.xml )"
 # Creates the associative array xml_files with file names as keys and
 # the top-level XML element as values.
 
+# NOTE: xml_files is global.
 declare -A xml_files
 
 for f in "$data_dir"/*.xml; do
