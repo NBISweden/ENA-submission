@@ -51,10 +51,10 @@ function submit_generic
     #   1: File name
     #   2: Schema
 
-    # See if this file has been submitted before, in which case the
-    # "action" must be "MODIFY" rather than "ADD".
+    # See if this file has been submitted successfully before, in which
+    # case the "action" must be "MODIFY" rather than "ADD".
 
-    local submitted="$( get_value "//file[@name='$1']/submission" <"$state_xml" )"
+    local submitted="$( get_value "//file[@name='$1']/submission[@success='true']" <"$state_xml" )"
     local action
 
     if [[ -z "$submitted" ]]; then
