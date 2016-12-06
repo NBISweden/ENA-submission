@@ -74,8 +74,6 @@ function submit_generic
     add_attr "//$action" "source" "$1" |
     add_attr "//$action" "schema" "$2" >"$data_dir"/submission.xml
 
-    process_submission "$1" "$2"
-
     # Update the state XML
 
     tmpfile="$( mktemp )"
@@ -86,6 +84,8 @@ function submit_generic
         "action" "$action" >"$tmpfile"
 
     mv -f "$tmpfile" "$state_xml"
+
+    process_submission "$1" "$2"
 }
 
 function process_submission
@@ -100,8 +100,11 @@ function process_submission
     #   1: File name (of the file referenced by the submission XML)
     #   2: Schema (of that file)
 
+    local response_xml
+    response_xml="$data_dir/submission-response.xml"
+
     if ! curl --fail --insecure \
-        -o "$data_dir"/submission-response.xml \
+        -o "$response_xml" \
         -F "SUBMISSION=@$data_dir/submission.xml" \
         -F "${2^^}=@$data_dir/$1" \
         "$ENA_TEST_URL?auth=ENA%20$username%20$password"
@@ -111,6 +114,30 @@ function process_submission
     fi
 
     # TODO: Parse reply, put IDs in state XML (if successful).
+
+    local success
+    success="$( get_value "/RECEIPT/@success" "$response_xml" )"
+
+    tmpfile="$( mktemp )"
+
+    add_attr "//file[@name='$1']/submission[last()]" \
+        "success" "$success" <"$state_xml" >"$tmpfile"
+
+    echo "Informational messages:"
+    get_value "//MESSAGES/INFO" <"$response_xml"
+
+    if [[ "$success" != "true" ]]; then
+        echo "The submission failed"
+        echo "Errors:"
+        get_value "//MESSAGES/ERROR" <"$response_xml"
+        return
+    fi
+
+    # Pick out the IDs from the response and store them in the state
+    # XML.  Note that sample submissions also get a "biosample" ID in an
+    # <EXT_ID> tag.
+
+
 }
 
 # vim: ft=sh
