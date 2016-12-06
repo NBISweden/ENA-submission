@@ -74,7 +74,7 @@ function submit_generic
     add_attr "//$action" "source" "$1" |
     add_attr "//$action" "schema" "$2" >"$data_dir"/submission.xml
 
-    process_submission
+    process_submission "$1" "$2"
 
     # Update the state XML
 
@@ -97,12 +97,20 @@ function process_submission
     #
     # Parameters:
     #
-    #   None
+    #   1: File name (of the file referenced by the submission XML)
+    #   2: Schema (of that file)
 
-    # TODO: Submit with curl here.
+    if ! curl --fail --insecure \
+        -o "$data_dir"/submission-response.xml \
+        -F "SUBMISSION=@$data_dir/submission.xml" \
+        -F "${2^^}=@$data_dir/$1" \
+        "$ENA_TEST_URL?auth=ENA%20$username%20$password"
+    then
+        printf "curl failed to submit '%s'\n" "$1" >&2
+        exit 1
+    fi
+
     # TODO: Parse reply, put IDs in state XML (if successful).
-
-    true
 }
 
 # vim: ft=sh
