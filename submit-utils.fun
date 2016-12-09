@@ -130,6 +130,9 @@ function process_submission
         echo "The submission failed"
         echo "Errors:"
         get_value "//MESSAGES/ERROR" <"$response_xml"
+
+        mv -f "$tmpfile" "$state_xml"
+
         return
     fi
 
