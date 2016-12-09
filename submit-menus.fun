@@ -100,4 +100,12 @@ function yesno_menu
     done
 }
 
+function upload_menu
+{
+    # Will conditionally upload the given data file to the ENA FTP server.
+
+    true
+}
+
+
 # vim: ft=sh
