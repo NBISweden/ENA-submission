@@ -58,11 +58,14 @@ center_name="$( get_value "/config/center_name" <config.xml )"
 declare -A xml_files
 
 for f in "$data_dir"/*.xml; do
-    if [[ "$f" == "$state_xml" ]]; then
-        continue
-    fi
-
     f_basename="$( basename "$f" )"
+
+    case "$f_basename" in
+        state.xml)      ;&  # fallthrough
+        submission*.xml)
+            continue    ;;
+    esac
+
     f_type="$( xmlstarlet el "$f" | head -n 1 )"
 
     xml_files["$f_basename"]="$f_type"
@@ -71,7 +74,7 @@ done
 # Make sure each XML file is present in the state XML.
 
 for f in "${!xml_files[@]}"; do
-    data="$( get_value "//file[@name='$f']" <"$state_xml" )"
+    data="$( get_value "//file[@name='$f']/@name" <"$state_xml" )"
 
     if [[ -z "$data" ]]; then
         # Insert file info into state XML.
