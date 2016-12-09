@@ -19,45 +19,45 @@ timestamp="$( date -u +"%F %T" )"
 # TODO: Add command line parsing here whenever we know how we want this
 # to be used non-interactively.
 
-# NOTE: data_dir is global.
-data_dir="$1"
+# NOTE: DATA_DIR is global.
+DATA_DIR="$1"
 
-if [[ ! -d "$data_dir" ]]; then
-    printf "No such directory: %s\n" "$data_dir" >&2
+if [[ ! -d "$DATA_DIR" ]]; then
+    printf "No such directory: %s\n" "$DATA_DIR" >&2
     exit 1
 fi
 
 # This is where we store the retrieved ENA IDs etc.
 
-# NOTE: state_xml is global.
-state_xml="$data_dir/state.xml"
+# NOTE: STATE_XML is global.
+STATE_XML="$DATA_DIR/state.xml"
 
-if [[ ! -f "$state_xml" ]]; then
+if [[ ! -f "$STATE_XML" ]]; then
     # Initialize the state XML file.
 
     init_xml "state" |
     add_attr "/state" "created" "$timestamp" |
-    add_elem "/state" "files" >"$state_xml"
+    add_elem "/state" "files" >"$STATE_XML"
 fi
 
 # Get data from configuration file.  We currently assume that the
 # configuration file, config.xml, is available in the current directory.
-# We may change this later so that it's picked up from $data_dir
+# We may change this later so that it's picked up from $DATA_DIR
 # instead.
 
 # NOTE: These three variables are global.
-username="$( get_value "/config/username" <config.xml )"
-password="$( get_value "/config/password" <config.xml )"
-center_name="$( get_value "/config/center_name" <config.xml )"
+USERNAME="$( get_value "/config/username" <config.xml )"
+PASSWORD="$( get_value "/config/password" <config.xml )"
+CENTER_NAME="$( get_value "/config/center_name" <config.xml )"
 
-# Examine the XML files in $data_dir to figure out what they are.
-# Creates the associative array xml_files with file names as keys and
+# Examine the XML files in $DATA_DIR to figure out what they are.
+# Creates the associative array XML_FILES with file names as keys and
 # the top-level XML element as values.
 
-# NOTE: xml_files is global.
-declare -A xml_files
+# NOTE: XML_FILES is global.
+declare -A XML_FILES
 
-for f in "$data_dir"/*.xml; do
+for f in "$DATA_DIR"/*.xml; do
     f_basename="$( basename "$f" )"
 
     case "$f_basename" in
@@ -68,23 +68,23 @@ for f in "$data_dir"/*.xml; do
 
     f_type="$( xmlstarlet el "$f" | head -n 1 )"
 
-    xml_files["$f_basename"]="$f_type"
+    XML_FILES["$f_basename"]="$f_type"
 done
 
 # Make sure each XML file is present in the state XML.
 
-for f in "${!xml_files[@]}"; do
-    data="$( get_value "//file[@name='$f']/@name" <"$state_xml" )"
+for f in "${!XML_FILES[@]}"; do
+    data="$( get_value "//file[@name='$f']/@name" <"$STATE_XML" )"
 
     if [[ -z "$data" ]]; then
         # Insert file info into state XML.
 
         tmpfile=$( mktemp )
 
-        add_elem "//files" "file" <"$state_xml" |
+        add_elem "//files" "file" <"$STATE_XML" |
         add_attr "//file[last()]" "name" "$f" >"$tmpfile"
 
-        mv -f "$tmpfile" "$state_xml"
+        mv -f "$tmpfile" "$STATE_XML"
     fi
 done
 

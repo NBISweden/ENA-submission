@@ -11,13 +11,13 @@ function display_state
     # For now, it simply displays the raw contents of the state.xml
     # file.
 
-    if [[ ! -f "$state_xml" ]]; then
-        printf "Can not find '%s'.\n" "$state_xml"
+    if [[ ! -f "$STATE_XML" ]]; then
+        printf "Can not find '%s'.\n" "$STATE_XML"
         return
     fi
 
     echo "Current state:"
-    cat "$state_xml"
+    cat "$STATE_XML"
 }
 
 function make_submission
@@ -54,7 +54,7 @@ function submit_generic
     # See if this file has been submitted successfully before, in which
     # case the "action" must be "MODIFY" rather than "ADD".
 
-    local submitted="$( get_value "//file[@name='$1']/submission[@success='true']" <"$state_xml" )"
+    local submitted="$( get_value "//file[@name='$1']/submission[@success='true']" <"$STATE_XML" )"
     local action
 
     if [[ -z "$submitted" ]]; then
@@ -66,24 +66,24 @@ function submit_generic
     # Create submission XML.
 
     init_xml "SUBMISSION" |
-    add_attr "/SUBMISSION" "alias" "$username $timestamp" |
-    add_attr "/SUBMISSION" "center_name" "$center_name" |
+    add_attr "/SUBMISSION" "alias" "$USERNAME $timestamp" |
+    add_attr "/SUBMISSION" "center_name" "$CENTER_NAME" |
     add_elem "/SUBMISSION" "ACTIONS" |
     add_elem "//ACTIONS" "ACTION" |
     add_elem "//ACTION" "$action" |
     add_attr "//$action" "source" "$1" |
-    add_attr "//$action" "schema" "$2" >"$data_dir"/submission.xml
+    add_attr "//$action" "schema" "$2" >"$DATA_DIR"/submission.xml
 
     # Update the state XML
 
     tmpfile="$( mktemp )"
 
     add_elem "//file[@name='$1']" \
-        "submission" "$username $timestamp" <"$state_xml" |
+        "submission" "$USERNAME $timestamp" <"$STATE_XML" |
     add_attr "//file[@name='$1']/submission[last()]" \
         "action" "$action" >"$tmpfile"
 
-    mv -f "$tmpfile" "$state_xml"
+    mv -f "$tmpfile" "$STATE_XML"
 
     process_submission "$1" "$2"
 }
@@ -101,13 +101,13 @@ function process_submission
     #   2: Schema (of that file)
 
     local response_xml
-    response_xml="$data_dir/submission-response.xml"
+    response_xml="$DATA_DIR/submission-response.xml"
 
     if ! curl --fail --insecure \
         -o "$response_xml" \
-        -F "SUBMISSION=@$data_dir/submission.xml" \
-        -F "${2^^}=@$data_dir/$1" \
-        "$ENA_TEST_URL?auth=ENA%20$username%20$password"
+        -F "SUBMISSION=@$DATA_DIR/submission.xml" \
+        -F "${2^^}=@$DATA_DIR/$1" \
+        "$ENA_TEST_URL?auth=ENA%20$USERNAME%20$PASSWORD"
     then
         printf "curl failed to submit '%s'\n" "$1" >&2
         exit 1
@@ -118,10 +118,11 @@ function process_submission
     local success
     success="$( get_value "/RECEIPT/@success" <"$response_xml" )"
 
+    local tmpfile
     tmpfile="$( mktemp )"
 
     add_attr "//file[@name='$1']/submission[last()]" \
-        "success" "$success" <"$state_xml" >"$tmpfile"
+        "success" "$success" <"$STATE_XML" >"$tmpfile"
 
     echo "Informational messages:"
     get_value "//MESSAGES/INFO" <"$response_xml"
@@ -131,7 +132,7 @@ function process_submission
         echo "Errors:"
         get_value "//MESSAGES/ERROR" <"$response_xml"
 
-        mv -f "$tmpfile" "$state_xml"
+        mv -f "$tmpfile" "$STATE_XML"
 
         return
     fi
@@ -157,7 +158,7 @@ function process_submission
     add_attr "//file[@name='$1']/submission[last()]/accession" \
         "ext" "$ext_id" |
     add_attr "//file[@name='$1']/submission[last()]" \
-        "accession" "$sub_accession" >"$state_xml"
+        "accession" "$sub_accession" >"$STATE_XML"
 
     rm -f "$tmpfile"
 }

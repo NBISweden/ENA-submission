@@ -42,8 +42,8 @@ function submit_menu
 
     # Make menu from available XML files.
 
-    for f in "${!xml_files[@]}"; do
-        choices+=( "$( printf "Submit '%s' (%s)" "$f" "${xml_files[$f]}" )" )
+    for f in "${!XML_FILES[@]}"; do
+        choices+=( "$( printf "Submit '%s' (%s)" "$f" "${XML_FILES[$f]}" )" )
         files+=( "$f" )
     done
 
@@ -71,7 +71,7 @@ MENU_INFO_END
                     local file="${files[$((REPLY - 2))]}"
                     printf "Submit '%s'?\n" "$file"
                     if [[ $( yesno_menu ) == "yes" ]]; then
-                        make_submission "$file" "${xml_files[$file]}"
+                        make_submission "$file" "${XML_FILES[$file]}"
                     fi
 
                     break ;;    # to re-display the menu
