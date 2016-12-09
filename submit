@@ -19,11 +19,20 @@ timestamp="$( date -u +"%F %T" )"
 # TODO: Add command line parsing here whenever we know how we want this
 # to be used non-interactively.
 
-# NOTE: DATA_DIR is global.
-DATA_DIR="$1"
+# NOTE: DATA_DIR ind DATA_FILE are global.
+DATA_DIR="$( dirname $1 )"
+DATA_FILE="$( basename $1 )"
+
+# If no data file was given (just directory name), clear DATA_FILE.
+if [[ "$DATA_FILE" == "$DATA_DIR" ]] || [[ -d "$DATA_FILE" ]]; then
+    unset DATA_FILE
+fi
 
 if [[ ! -d "$DATA_DIR" ]]; then
     printf "No such directory: %s\n" "$DATA_DIR" >&2
+    exit 1
+elif [[ -n "$DATA_FILE" ]] && [[ ! -f "$DATA_FILE" ]]; then
+    printf "No such file: %s\n" "$DATA_FILE" >&2
     exit 1
 fi
 
