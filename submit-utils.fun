@@ -116,7 +116,7 @@ function process_submission
     # TODO: Parse reply, put IDs in state XML (if successful).
 
     local success
-    success="$( get_value "/RECEIPT/@success" "$response_xml" )"
+    success="$( get_value "/RECEIPT/@success" <"$response_xml" )"
 
     tmpfile="$( mktemp )"
 
@@ -135,9 +135,28 @@ function process_submission
 
     # Pick out the IDs from the response and store them in the state
     # XML.  Note that sample submissions also get a "biosample" ID in an
-    # <EXT_ID> tag.
+    # EXT_ID tag.
 
+    local sub_accession
+    local accession
+    local alias
+    local biosample_id
 
+    sub_accession="$( get_value "//SUBMISSION/@accession" <"$response_xml" )"
+    accession="$( get_value "//${2^^}/@accession" <"$response_xml" )"
+    alias="$( get_value "//${2^^}/@alias" <"$response_xml" )"
+    ext_id="$( get_value "//${2^^}/EXT_ID/@accession" <"$response_xml" )"
+
+    add_elem "//file[@name='$1']/submission[last()]" \
+        "accession" "$alias" <"$tmpfile" |
+    add_attr "//file[@name='$1']/submission[last()]/accession" \
+        "ena" "$accession" |
+    add_attr "//file[@name='$1']/submission[last()]/accession" \
+        "ext" "$ext_id" |
+    add_attr "//file[@name='$1']/submission[last()]" \
+        "accession" "$sub_accession" >"$state_xml"
+
+    rm -f "$tmpfile"
 }
 
 # vim: ft=sh
