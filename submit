@@ -19,12 +19,14 @@ timestamp="$( date -u +"%F %T" )"
 # TODO: Add command line parsing here whenever we know how we want this
 # to be used non-interactively.
 
-# NOTE: DATA_DIR ind DATA_FILE are global.
+# NOTE: DATA_DIR and DATA_FILE are global.
 DATA_DIR="$( dirname $1 )"
 DATA_FILE="$( basename $1 )"
 
-# If no data file was given (just directory name), clear DATA_FILE.
-if [[ "$DATA_FILE" == "$DATA_DIR" ]] || [[ -d "$DATA_FILE" ]]; then
+# If no data file was given (just directory name), clear DATA_FILE
+# and set DATA_DIR to that directory.
+if [[ -d "$DATA_FILE" ]]; then
+    DATA_DIR="$DATA_FILE"
     unset DATA_FILE
 fi
 
