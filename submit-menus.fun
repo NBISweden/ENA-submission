@@ -83,21 +83,26 @@ MENU_INFO_END
 
 function yesno_menu
 {
-    # Get a simple yes/no from the user.
+    # Get a simple yes/no from the user.  Default answer is 'no' (1).
     #
     # Parameters: none
     #
     #   stdin:  none
-    #   stdout: "yes" or "no"
+    #   stdout: none
+    #
+    #   Returns 1 (no) or 0 (yes).
+    #
+    #   Example:
+    #       if yesno; then echo "got 'yes'"; else echo "got 'no'"; fi
 
-    select opt in "Yes" "No"; do
-        case "$REPLY" in
-            1)  echo "yes"
-                break   ;;
-            2)  echo "no"
-                break   ;;
-        esac
-    done
+    echo -n "Yes/[N]o > "
+    read -r
+
+    if [[ "$REPLY" =~ ^[Yy] ]]; then
+        return 0
+    fi
+
+    return 1
 }
 
 function upload_menu
