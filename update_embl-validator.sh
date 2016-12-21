@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # This script updates the JAR file "embl-validator.jar" in the
 # current directory.  The JAR file is ENA's flat-file validator for
@@ -11,18 +11,13 @@
 # The JAR file is fetched using 'curl', but only if the JAR file is
 # missing from the current directory, or if it's outdated.
 
-# If XMLStarlet is installed, the script is smart and get the latest
-# version, otherwise it tries to use sed to parse the meta data
-# available.  If either of these approaches fail, the value of
-# 'current_version' below is used.
+source "$( dirname "$0" )"/submit-compat.fun
 
-current_version="1.1.150"
+current_version="1.1.153"
 
-# Use XMLStarlet to get the latest available version number.
+# Use Curl+XMLStarlet to get the latest available version number.
 
-xmlstarlet="$( which xmlstarlet 2>/dev/null || which xml 2>/dev/null )"
-
-curr_version=$( curl -s http://central.maven.org/maven2/uk/ac/ebi/ena/sequence/embl-api-validator/maven-metadata.xml | "$xmlstarlet" sel -t -v '//latest' -nl )
+curr_version=$( curl -s http://central.maven.org/maven2/uk/ac/ebi/ena/sequence/embl-api-validator/maven-metadata.xml | xmlstarlet sel -t -v '//latest' -nl )
 
 if [ "x$curr_version" != "x" ]; then
     current_version="$curr_version"
