@@ -70,7 +70,7 @@ MENU_INFO_END
 
                     local file="${files[$((REPLY - 2))]}"
                     printf "Submit '%s'?\n" "$file"
-                    if [[ $( yesno_menu ) == "yes" ]]; then
+                    if yesno; then
                         make_submission "$file" "${XML_FILES[$file]}"
                     fi
 
@@ -81,7 +81,7 @@ MENU_INFO_END
     done
 }
 
-function yesno_menu
+function yesno
 {
     # Get a simple yes/no from the user.  Default answer is 'no' (1).
     #
