@@ -8,7 +8,7 @@ function main_menu
 
         cat <<MENU_INFO_END
     ========================================================================
-                            You're at the main menu.
+                            You're at the MAIN menu.
          At any time, just press enter to re-display the current menu.
     ========================================================================
 MENU_INFO_END
@@ -51,7 +51,7 @@ function submit_menu
 
         cat <<MENU_INFO_END
     ------------------------------------------------------------------------
-                          You're at the 'submit' menu.
+                           You're at the SUBMIT menu.
          At any time, just press enter to re-display the current menu.
     ------------------------------------------------------------------------
 MENU_INFO_END
@@ -81,6 +81,34 @@ MENU_INFO_END
     done
 }
 
+function upload_menu
+{
+    # Will conditionally upload the given data file to the ENA FTP server.
+
+    while true; do
+        cat <<MENU_INFO_END
+    ------------------------------------------------------------------------
+                           You're at the UPLOAD menu.
+         At any time, just press enter to re-display the current menu.
+    ------------------------------------------------------------------------
+MENU_INFO_END
+
+        if [[ -z "$DATA_FILE" ]]; then
+            echo "NOTE: No data file was given on the command line"
+        fi
+
+        select thing in \
+            "Go back to the main menu" \
+            "Submit the data file '$DATA_FILE'"
+        do
+            case "$REPLY" in
+                1)  return  ;;
+                2)  make_upload ;;
+            esac
+        done
+    done
+}
+
 function yesno
 {
     # Get a simple yes/no from the user.  Default answer is 'no' (1).
@@ -104,13 +132,5 @@ function yesno
 
     return 1
 }
-
-function upload_menu
-{
-    # Will conditionally upload the given data file to the ENA FTP server.
-
-    true
-}
-
 
 # vim: ft=sh
