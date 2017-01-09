@@ -34,8 +34,6 @@ source "$script_path"/submit-menus.fun
 source "$script_path"/submit-xml.fun
 source "$script_path"/submit-utils.fun
 
-timestamp="$( date -u +"%F %T" )"
-
 # TODO: Add command line parsing here whenever we know how we want this
 # to be used non-interactively.
 
@@ -67,7 +65,7 @@ if [[ ! -f "$STATE_XML" ]]; then
     # Initialize the state XML file.
 
     init_xml "state" |
-    add_attr "/state" "created" "$timestamp" |
+    add_attr "/state" "created" "$(timestamp)" |
     add_elem "/state" "files" >"$STATE_XML"
 fi
 

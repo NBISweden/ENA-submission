@@ -77,7 +77,7 @@ function submit_generic
     # Create submission XML.
 
     init_xml "SUBMISSION" |
-    add_attr "/SUBMISSION" "alias" "$USERNAME $timestamp" |
+    add_attr "/SUBMISSION" "alias" "$USERNAME $(timestamp)" |
     add_attr "/SUBMISSION" "center_name" "$CENTER_NAME" |
     add_elem "/SUBMISSION" "ACTIONS" |
     add_elem "//ACTIONS" "ACTION" |
