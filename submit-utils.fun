@@ -1,5 +1,14 @@
 # Bash shell utility functions.
 
+function timestamp
+{
+    # Outputs a timestamp.
+    # The timestamp will be on the form "YYYY-MM-DD hh:mm:ss", in the
+    # UTC time zone.
+
+    date -u +"%F %T"
+}
+
 function display_state
 {
     # Will eventually display the current state of submissions by
