@@ -4,6 +4,26 @@ set -e
 
 script_path="$( dirname "$0" )"
 
+# Do command line parsing. there's not much of it as this script only
+# takes one (a directory name or a filename).
+if [[ "$#" != 1 ]]; then
+    cat >&2 <<USAGE_END
+Usage:
+    $0 directory
+    $0 flatfile
+
+    directory   - The path to a directory where XML files to be submitted
+                  to the ENA are located.
+
+    flatfile    - The path to a flatfile to be submitted to the ENA.
+
+NOTE: If the path to a flatfile is specified, it is assumed that the
+accompnying XML files are located in the same directory as that file.
+
+USAGE_END
+    exit 1
+fi
+
 # NOTE: ENA_TEST_URL is global.
 ENA_TEST_URL="https://www-test.ebi.ac.uk/ena/submit/drop-box/submit"
 
