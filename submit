@@ -40,8 +40,8 @@ timestamp="$( date -u +"%F %T" )"
 # to be used non-interactively.
 
 # NOTE: DATA_DIR and DATA_FILE are global.
-DATA_DIR="$( dirname $1 )"
-DATA_FILE="$( basename $1 )"
+DATA_DIR="$( dirname "$1" )"
+DATA_FILE="$( basename "$1" )"
 
 # If no data file was given (just directory name), clear DATA_FILE
 # and set DATA_DIR to that directory.

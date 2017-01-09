@@ -54,8 +54,10 @@ function submit_generic
     # See if this file has been submitted successfully before, in which
     # case the "action" must be "MODIFY" rather than "ADD".
 
-    local submitted="$( get_value "//file[@name='$1']/submission[@success='true']" <"$STATE_XML" )"
+    local submitted
     local action
+
+    submitted="$( get_value "//file[@name='$1']/submission[@success='true']" <"$STATE_XML" )"
 
     if [[ -z "$submitted" ]]; then
         action="ADD"
@@ -144,7 +146,7 @@ function process_submission
     local sub_accession
     local accession
     local alias
-    local biosample_id
+    local ext_id
 
     sub_accession="$( get_value "//SUBMISSION/@accession" <"$response_xml" )"
     accession="$( get_value "//${2^^}/@accession" <"$response_xml" )"
