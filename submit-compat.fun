@@ -3,7 +3,7 @@
 # Make sure we have GNU Date.  Test it by calling it with '--version'
 # (the output shold mention "coreutils").
 
-date_cmd="$( which gdate 2>/dev/null || which date 2>/dev/null )"
+date_cmd="$( command -v gdate || command -v date )"
 
 if ! command "$date_cmd" --version 2>/dev/null | grep -q -F "coreutils"
 then
@@ -21,7 +21,7 @@ function date
 # Figure out whether xmlstarlet is called "xmlstarlet" (as on UPPMAX) or
 # "xml" as on development machine.
 
-xmlstarlet_cmd="$( which xmlstarlet 2>/dev/null || which xml 2>/dev/null )"
+xmlstarlet_cmd="$( command -v xmlstarlet || command -v xml )"
 
 if [[ -z "$xmlstarlet_cmd" ]]; then
     echo "This tool requires XML Starlet" >&2
@@ -37,7 +37,7 @@ function xmlstarlet
 
 # Make sure we have Curl.
 
-curl_cmd="$( which curl 2>/dev/null )"
+curl_cmd="$( command -v curl )"
 
 if [[ -z "$curl_cmd" ]]; then
     echo "This tool requires Curl" >&2
