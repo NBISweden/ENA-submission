@@ -38,8 +38,8 @@ source "$script_path"/submit-utils.fun
 # to be used non-interactively.
 
 # NOTE: DATA_DIR and DATA_FILE are global.
-DATA_DIR="$( dirname "$1" )"
-DATA_FILE="$( basename "$1" )"
+DATA_FILE="$1"
+DATA_DIR="$( dirname "$DATA_FILE" )"
 
 # If no data file was given (just directory name), clear DATA_FILE
 # and set DATA_DIR to that directory.
