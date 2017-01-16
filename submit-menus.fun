@@ -94,7 +94,8 @@ function upload_menu
 MENU_INFO_END
 
         if [[ -z "$DATA_FILE" ]]; then
-            echo "NOTE: No data file was given on the command line"
+            echo "ERROR: No data file was given on the command line"
+            return
         fi
 
         select thing in \
