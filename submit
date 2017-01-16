@@ -46,10 +46,10 @@ if [[ -d "$DATA_FILE" ]]; then
 fi
 
 if [[ ! -d "$DATA_DIR" ]]; then
-    printf "No such directory: %s\n" "$DATA_DIR" >&2
+    printf 'No such directory: %s\n' "$DATA_DIR" >&2
     exit 1
 elif [[ -n "$DATA_FILE" ]] && [[ ! -f "$DATA_FILE" ]]; then
-    printf "No such file: %s\n" "$DATA_FILE" >&2
+    printf 'No such file: %s\n' "$DATA_FILE" >&2
     exit 1
 fi
 

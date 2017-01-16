@@ -24,7 +24,7 @@ function init_xml
     #   stdin:  none
     #   stdout: XML
 
-    printf "<%s />" "$1"
+    printf '<%s />' "$1"
 }
 
 function add_elem

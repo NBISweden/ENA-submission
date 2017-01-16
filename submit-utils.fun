@@ -21,7 +21,7 @@ function display_state
     # file.
 
     if [[ ! -f "$STATE_XML" ]]; then
-        printf "Can not find '%s'.\n" "$STATE_XML"
+        printf 'Can not find "%s".\n' "$STATE_XML"
         return
     fi
 
@@ -45,7 +45,7 @@ function make_submission
         SAMPLE_SET) submit_generic "$1" "sample"    ;;
         STUDY_SET)  submit_generic "$1" "study"     ;;
         *)
-            printf "Submissions of '%s' are currently not implemented\n" \
+            printf 'Submissions of "%s" are currently not implemented\n' \
                 "$2" >&2
             ;;
     esac
@@ -122,7 +122,7 @@ function process_submission
         -F "${2^^}=@$DATA_DIR/$1" \
         "$ENA_TEST_URL?auth=ENA%20$USERNAME%20$PASSWORD"
     then
-        printf "curl failed to submit '%s'\n" "$1" >&2
+        printf 'curl failed to submit "%s"\n' "$1" >&2
         exit 1
     fi
 
