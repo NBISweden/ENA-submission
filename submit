@@ -34,9 +34,6 @@ source "$script_path"/submit-menus.fun
 source "$script_path"/submit-xml.fun
 source "$script_path"/submit-utils.fun
 
-# TODO: Add command line parsing here whenever we know how we want this
-# to be used non-interactively.
-
 # NOTE: DATA_DIR and DATA_FILE are global.
 DATA_FILE="$1"
 DATA_DIR="$( dirname "$DATA_FILE" )"
