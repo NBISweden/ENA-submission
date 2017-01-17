@@ -24,8 +24,9 @@ USAGE_END
     exit 1
 fi
 
-# NOTE: ENA_TEST_URL is global.
+# NOTE: The following variables are global.
 ENA_TEST_URL="https://www-test.ebi.ac.uk/ena/submit/drop-box/submit"
+ENA_WEBIN_FTP="webin.ebi.ac.uk"
 
 # Import our functions.
 
