@@ -178,8 +178,18 @@ function process_submission
 
 function make_upload
 {
+    # Uploads the specified datafile ($DATA_FILE) te the ENA Webin FTP
+    # server ($ENA_WEBIN_FTP).
+    #
+    # Parameters:
+    #
+    #   none
 
+    ftp -v -n "$ENA_WEBIN_FTP" <<FTP_END
+user "$USERNAME" "$PASSWORD"
+binary
+put "$DATA_FILE" "${DATA_FILE##*/}"
+FTP_END
 }
-
 
 # vim: ft=sh
