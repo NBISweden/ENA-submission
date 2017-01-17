@@ -174,7 +174,12 @@ function process_submission
         "ext" "$ext_id" |
     add_attr "//file[@name='$1']/submission[last()]" \
         "accession" "$sub_accession" >"$STATE_XML"
+}
+
+function make_upload
+{
 
 }
+
 
 # vim: ft=sh
