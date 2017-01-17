@@ -42,8 +42,9 @@ function make_submission
     #   2:  File type
 
     case "$2" in
-        SAMPLE_SET) submit_simple "$1" "sample"    ;;
-        STUDY_SET)  submit_simple "$1" "study"     ;;
+        SAMPLE_SET)     submit_simple "$1" "sample"    ;;
+        STUDY_SET)      submit_simple "$1" "study"     ;;
+        ANALYSIS_SET)   submit_simple "$1" "analysis"   ;;
         *)
             printf 'Submissions of "%s" are currently not implemented\n' \
                 "$2" >&2
