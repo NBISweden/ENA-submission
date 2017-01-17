@@ -42,8 +42,8 @@ function make_submission
     #   2:  File type
 
     case "$2" in
-        SAMPLE_SET) submit_generic "$1" "sample"    ;;
-        STUDY_SET)  submit_generic "$1" "study"     ;;
+        SAMPLE_SET) submit_simple "$1" "sample"    ;;
+        STUDY_SET)  submit_simple "$1" "study"     ;;
         *)
             printf 'Submissions of "%s" are currently not implemented\n' \
                 "$2" >&2
@@ -51,7 +51,7 @@ function make_submission
     esac
 }
 
-function submit_generic
+function submit_simple
 {
     # Submits an XML file.
     #
@@ -103,7 +103,7 @@ function submit_generic
 
 function process_submission
 {
-    # Submits the submission XML file created by submit_generic and
+    # Submits the submission XML file created by submit_simple and
     # updates the state XML with the IDs that ENA gives us.  The state
     # XML will also hold the submission status (the attribute "success"
     # will be set to either "true" or "false").
