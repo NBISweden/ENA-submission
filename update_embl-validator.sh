@@ -13,7 +13,7 @@
 
 source "$( dirname "$0" )"/submit-compat.fun
 
-current_version="1.1.153"
+current_version="1.1.155"
 
 # Use Curl+XMLStarlet to get the latest available version number.
 
@@ -21,11 +21,11 @@ curr_version=$( curl -s http://central.maven.org/maven2/uk/ac/ebi/ena/sequence/e
 
 if [ "x$curr_version" != "x" ]; then
     current_version="$curr_version"
-    printf "ENA says current version of validator is '%s'\n" "$current_version"
-    echo "Fetching/updating it as needed..."
+    printf 'ENA says current version of validator is "%s"\n' "$current_version"
+    echo "Fetching/updating it (if needed)..."
 else
     echo "Failed in getting current version number of validator from ENA."
-    printf "Attempting to fetch version '%s'\n" "$current_version"
+    printf 'Attempting to fetch version "%s"\n' "$current_version"
 fi
 
 if [ -f embl-validator.jar ]; then
