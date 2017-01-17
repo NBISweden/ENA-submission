@@ -134,6 +134,7 @@ function process_submission
 
     local tmpfile
     tmpfile="$( mktemp )"
+    trap 'rm -f "$tmpfile"' RETURN
 
     add_attr "//file[@name='$1']/submission[last()]" \
         "success" "$success" <"$STATE_XML" >"$tmpfile"
@@ -174,7 +175,6 @@ function process_submission
     add_attr "//file[@name='$1']/submission[last()]" \
         "accession" "$sub_accession" >"$STATE_XML"
 
-    rm -f "$tmpfile"
 }
 
 # vim: ft=sh
