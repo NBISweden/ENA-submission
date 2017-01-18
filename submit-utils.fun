@@ -178,17 +178,29 @@ function process_submission
 
 function make_upload
 {
-    # Uploads the specified datafile ($DATA_FILE) te the ENA Webin FTP
-    # server ($ENA_WEBIN_FTP).
+    # Uploads the specified datafile ($DATA_FILE) to the ENA Webin FTP
+    # server ($ENA_WEBIN_FTP).  If the file is not compressed, it will
+    # be compressed using gzip before it is uploaded.  The MD5 digest of
+    # the compressed data file will also be uploaded.
     #
     # Parameters:
     #
     #   none
 
+    if [[ "$DATA_FILE" !~ \.gz$ ]]; then
+        printf 'Compressing "%s"\n' "$DATA_FILE"
+        gzip --best "$DATA_FILE"
+        DATA_FILE="$DATA_FILE.gz"
+    fi
+
+    printf 'Computing MD5 digest for "%s"\n' "$DATA_FILE"
+    checksum "$DATA_FILE" >"$DATA_FILE".md5
+
     ftp -v -n "$ENA_WEBIN_FTP" <<FTP_END
 user "$USERNAME" "$PASSWORD"
 binary
 put "$DATA_FILE" "${DATA_FILE##*/}"
+put "$DATA_FILE".md5 "${DATA_FILE##*/}".md5
 FTP_END
 }
 
