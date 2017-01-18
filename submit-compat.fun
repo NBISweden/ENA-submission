@@ -1,5 +1,6 @@
 # Code and functions for portability and compatibility between systems.
 
+# ----------------------------------------------------------------------
 # Make sure we have GNU Date.  Test it by calling it with '--version'
 # (the output shold mention "coreutils").
 
@@ -18,6 +19,7 @@ function date
     command "$date_cmd" "$@"
 }
 
+# ----------------------------------------------------------------------
 # Use either BSD 'md5' or Linux 'md5sum'.
 
 checksum_cmd="$( command -v md5 || command -v md5sum )"
@@ -41,6 +43,7 @@ function checksum
     fi
 }
 
+# ----------------------------------------------------------------------
 # Figure out whether xmlstarlet is called "xmlstarlet" (as on UPPMAX) or
 # "xml" as on development machine.
 
@@ -58,6 +61,7 @@ function xmlstarlet
     command "$xmlstarlet_cmd" "$@"
 }
 
+# ----------------------------------------------------------------------
 # Make sure we have Curl.
 
 curl_cmd="$( command -v curl )"
