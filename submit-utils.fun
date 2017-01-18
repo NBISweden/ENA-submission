@@ -187,7 +187,7 @@ function make_upload
     #
     #   none
 
-    if [[ "$DATA_FILE" !~ \.gz$ ]]; then
+    if [[ ! "$DATA_FILE" =~ \.gz$ ]]; then
         printf 'Compressing "%s"\n' "$DATA_FILE"
         gzip --best "$DATA_FILE"
         DATA_FILE="$DATA_FILE.gz"
