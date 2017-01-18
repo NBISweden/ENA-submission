@@ -30,8 +30,9 @@ fi
 function checksum
 {
     # Computes the MD5 digest of a file.
+    # Returns digest (only) on stdout.
 
-    fpath="$1"
+    local fpath="$1"
 
     if [[ "${checksum_cmd##*/}" == "md5" ]]; then
         command "${checksum_cmd}" -q "$fpath"
