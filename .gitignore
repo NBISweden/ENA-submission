@@ -1,6 +1,6 @@
 SRA.*.xsd
 VAL_*
-config.local
+config.xml-local
 embl-validator.jar
 submission.xml
 t/
