@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # This script updates the JAR file "embl-validator.jar" in the
 # current directory.  The JAR file is ENA's flat-file validator for
@@ -11,30 +11,21 @@
 # The JAR file is fetched using 'curl', but only if the JAR file is
 # missing from the current directory, or if it's outdated.
 
-# If XMLStarlet is installed, the script is smart and get the latest
-# version, otherwise it tries to use sed to parse the meta data
-# available.  If either of these approaches fail, the value of
-# 'current_version' below is used.
+source "$( dirname "$0" )"/submit-compat.fun
 
-current_version="1.1.148"
+current_version="1.1.155"
 
-if which xml >/dev/null; then
-    # Use XMLStarlet to get the latest available version number.
-    curr_version=$( curl -s http://central.maven.org/maven2/uk/ac/ebi/ena/sequence/embl-api-validator/maven-metadata.xml | xml sel -t -v '//latest' -nl )
+# Use Curl+XMLStarlet to get the latest available version number.
 
-else
-    # We don't have XMLStarlet installed, so hack it with sed instead.
-    curr_version=$( curl http://central.maven.org/maven2/uk/ac/ebi/ena/sequence/embl-api-validator/maven-metadata.xml | sed -n '/latest/s/^[^0-9.]*\([0-9.]*\)[^0-9.]*$/\1/' )
-
-fi
+curr_version=$( curl -s http://central.maven.org/maven2/uk/ac/ebi/ena/sequence/embl-api-validator/maven-metadata.xml | xmlstarlet sel -t -v '//latest' -nl )
 
 if [ "x$curr_version" != "x" ]; then
     current_version="$curr_version"
-    printf "ENA says current version of validator is '%s'\n" "$current_version"
-    echo "Fetching/updating it as needed..."
+    printf 'ENA says current version of validator is "%s"\n' "$current_version"
+    echo "Fetching/updating it (if needed)..."
 else
     echo "Failed in getting current version number of validator from ENA."
-    printf "Attempting to fetch version '%s'\n" "$current_version"
+    printf 'Attempting to fetch version "%s"\n' "$current_version"
 fi
 
 if [ -f embl-validator.jar ]; then

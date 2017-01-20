@@ -1,56 +1,86 @@
-The two main scripts available in this folder, submit.pl and submitter.pl,
-were written to make it easier to submit data to the European Nucleotide
-Archive (ENA) at the EMBL-EBI outside of Cambridge, UK.
+NOTE: This is a work in progress.
+NOTE: While in development, the script only knows about the ENA test server.
 
-A third script, update_embl-validator.sh, downloads a tool from ENA for
-validating EMBL flat files.
+TODO: Implement replacing locus tags in data file by biosample IDs.
+TODO: Construct analysis XML template.
+TODO: When viewing the state (XML), make it look pretty.
+TODO: Enable submission of runs and other XML types.
 
-
-submit.pl
 ========================================================================
-This script both uploads data files and submits various XML files to the
-ENA.  It has a lot of flags, please run it with the "--help" flag for a
-full description.
 
+submit
+------------------------------------------------------------------------
 
-submitter.pl
-========================================================================
-This script is designed to be easy to use and uses submit.pl to upload
-a flat file provided by the user and the associated XML files, also
-provided by the user.  It then creates a template analysis XML file that
-may be filled in and submitted separately using the submit.pl script.
+The submit script is a menu-driven Bash shell script that will allow you
+to submit XML files and data files to the European Nucleotide Archive
+(ENA) at EMBL-EBI.
 
-To invoke:
+To use it:
 
-    $ ./submitter.pl mydata/flatfile.txt
+    $ ./submit directory
 
-Steps performed by script:
+or
 
-    1.  Submits the study and sample XML files to ENA.  It is assumed
-        that these files are present in the data folder ("mydata" in the
-        example above, but the folder may be called anything) and that
-        they are named "study.xml" and "sample.xml".
+    $ ./submit directory/datafile
 
-    2.  Receives the locus tag identifiers assigned by the ENA.
+In the first form, no datafile may be uploaded to the ENA FTP server,
+but XMLs may still be submitted.
 
-    3.  Creates a new flat file with the locus tags recieved from the
-        ENA replacing the old locus tags.  The new file will have the
-        same name as the old file, but with a "submit-" prefix.
+When started, the script will present you with a main menu, at which
+you may choose to
 
-    4.  Compresses the new flat file using "gzip".
+    1) Exit
+    2) Submit an XML file
+    3) Upload a data file
+    4) Display current state of submissions
 
-    7.  Uploads the newly compressed flat file to the ENA FTP server.
+The "Submit an XML file" option will take you to the submit menu.  The
+contents of this menu will depend on the files present in the directory
+given on the command line.
 
-    6.  Generates a partially filled-out template for the analysis XML in
-        the current directory.
+    1) Go back to the main menu
+    2) Submit "study.xml" (STUDY_SET)
+    3) Submit "sample.xml" (SAMPLE_SET)
+    4) Submit "analysis.xml" (ANALYSIS_SET)
 
-The user is then expected to fill out the remainder of the analysis
-file and to submit it manually to the ENA using the submit.pl script
-(submitter.pl will suggest a command line to do this).
+Choosing one of the submit options will perform the submission of that
+file to the ENA, and the response will be parsed and stored in the
+"state XML" (a special XML file that contains the state of submissions
+for the particular directory given on the command line).
+
+To view the state of submissions, pick "Display current state of
+submissions" from the main menu.  Currently, it will simply display the
+contents of the file "state.xml" in the data directory:
+
+(an initial state, with no attempted submissions)
+
+    Current state:
+    <?xml version="1.0"?>
+    <state created="2017-01-20 10:20:55">
+      <files>
+        <file name="study.xml"/>
+        <file name="sample.xml"/>
+        <file name="analysis.xml"/>
+      </files>
+    </state>
+
+(the state after successfully having submitted the "sample.xml" file)
+
+    Current state:
+    <?xml version="1.0"?>
+    <state created="2017-01-20 10:20:55">
+      <files>
+        <file name="study.xml">
+          <submission action="ADD" success="true" accession="ERA789934">Webin-40692 2017-01-20 10:22:08<accession ena="ERP021100" ext="PRJEB19110">Fake test study for testing programatic submissions</accession></submission>
+        </file>
+        <file name="sample.xml"/>
+        <file name="analysis.xml"/>
+      </files>
+    </state>
 
 
 update_embl-validator.sh
-========================================================================
+------------------------------------------------------------------------
 
 The ENA provides a validation tool for validating the contents of EMBL
 flat files.  The update_embl-validator.sh script downloads this tool (or

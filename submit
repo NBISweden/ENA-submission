@@ -1,403 +1,129 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-## EXTERNAL DEPENDENCIES:
-##  - XML Starlet ("xmlstarlet")
-##  - Curl ("curl")
-##  - GNU Date ("date")
+set -e
 
+script_path="$( dirname "$0" )"
+
+# Do command line parsing. there's not much of it as this script only
+# takes one (a directory name or a filename).
+if [[ "$#" != 1 ]]; then
+    cat >&2 <<USAGE_END
+Usage:
+    $0 directory
+    $0 flatfile
+
+    directory   - The path to a directory where XML files to be submitted
+                  to the ENA are located.
+
+    flatfile    - The path to a flatfile to be submitted to the ENA.
+
+NOTE: If the path to a flatfile is specified, it is assumed that the
+accompnying XML files are located in the same directory as that file.
+
+USAGE_END
+    exit 1
+fi
+
+# NOTE: The following variables are global.
 ENA_TEST_URL="https://www-test.ebi.ac.uk/ena/submit/drop-box/submit"
-ENA_PRODUCTION_URL="https://www.ebi.ac.uk/ena/submit/drop-box/submit"
 ENA_WEBIN_FTP="webin.ebi.ac.uk"
 
-function xml_init_submission
-{
-    # Creates an empty submission XML file in the current directory.
+# Import our functions.
 
-    cat >submission.xml <<XML_END
-<SUBMISSION>
-</SUBMISSION>
-XML_END
+source "$script_path"/submit-compat.fun
+source "$script_path"/submit-menus.fun
+source "$script_path"/submit-xml.fun
+source "$script_path"/submit-utils.fun
 
-    # Add the 'alias' and 'centre_name' attributes as well as an empty
-    # "ACTIONS" subnode.
+# NOTE: DATA_DIR and DATA_FILE are global.
+DATA_FILE="$1"
+DATA_DIR="$( dirname "$DATA_FILE" )"
 
-    submission_alias="${username}_$(date -u +"%Y%m%d:%H%M%S")"
+# If no data file was given (just directory name), clear DATA_FILE
+# and set DATA_DIR to that directory.
+if [[ -d "$DATA_FILE" ]]; then
+    DATA_DIR="$DATA_FILE"
+    unset DATA_FILE
+fi
 
-    xmlstarlet ed --inplace \
-        -i "/SUBMISSION" -t attr -n "alias" -v "$submission_alias" \
-        -i "/SUBMISSION" -t attr -n "center_name" -v "$center_name" \
-        -s "/SUBMISSION" -t elem -n "ACTIONS" -v '' \
-        submission.xml
-}
-
-function xml_action
-{
-    # Adds an (empty) action to an existing submission XML file.
-    # Parameters: $1 = type of action (ADD, MODIFY, HOLD, etc.)
-
-    xmlstarlet ed --inplace \
-        -s "/SUBMISSION/ACTIONS" -t elem -n "ACTION" -v '' \
-        -s "//ACTION[last()]" -t elem -n "$1" -v '' \
-        submission.xml
-}
-
-function xml_add
-{
-    # Adds an ADD action.
-    # Parameters: $1 = XML file basename, $2 = schema
-
-    xml_action "ADD"
-    xmlstarlet ed --inplace \
-        -i "//ACTION[last()]/ADD" -t attr -n "source" -v "$1" \
-        -i "//ACTION[last()]/ADD" -t attr -n "schema" -v "$2" \
-        submission.xml
-}
-
-function xml_modify
-{
-    # Adds a MODIFY action.
-    # Parameters: $1 = XML file basename, $2 = schema
-
-    xml_action "MODIFY"
-    xmlstarlet ed --inplace \
-        -i "//ACTION[last()]/MODIFY" -t attr -n "source" -v "$1" \
-        -i "//ACTION[last()]/MODIFY" -t attr -n "schema" -v "$2" \
-        submission.xml
-}
-
-function xml_validate
-{
-    # Adds a VALIDATE action.
-    # Parameters: $1 = XML file basename, $2 = schema
-
-    xml_action "VALIDATE"
-    xmlstarlet ed --inplace \
-        -i "//ACTION[last()]/VALIDATE" -t attr -n "source" -v "$1" \
-        -i "//ACTION[last()]/VALIDATE" -t attr -n "schema" -v "$2" \
-        submission.xml
-}
-
-function xml_hold
-{
-    # Adds a HOLD action.
-    # Parameters: $1 = date
-
-    xml_action "HOLD"
-    xmlstarlet ed --inplace \
-        -i "//ACTION[last()]/HOLD" -t attr -n "HoldUntilDate" -v "$1" \
-        submission.xml
-}
-
-function xml_cancel
-{
-    # Adds a CANCEL action.
-    # Parameters: $1 = accession to cancel
-
-    xml_add_action "CANCEL"
-    xmlstarlet ed --inplace \
-        -i "//ACTION[last()]/CANCEL" -t attr -n "target" -v "$1" \
-        submission.xml
-}
-
-# Read 'username', 'password' and 'center_name' from configuration file.
-
-if [[ ! -f config ]]; then
-    echo "Can not find configuration file 'config'" >&2
+if [[ ! -d "$DATA_DIR" ]]; then
+    printf 'No such directory: %s\n' "$DATA_DIR" >&2
+    exit 1
+elif [[ -n "$DATA_FILE" ]] && [[ ! -f "$DATA_FILE" ]]; then
+    printf 'No such file: %s\n' "$DATA_FILE" >&2
     exit 1
 fi
 
-username="$( sed -n 's/^username *//p' config )"
-password="$( sed -n 's/^password *//p' config )"
-center_name="$( sed -n 's/^center_name *//p' config )"
+# This is where we store the retrieved ENA IDs etc.
 
-# Make sure the data file is there.
+# NOTE: STATE_XML is global.
+STATE_XML="$DATA_DIR/state.xml"
 
-data_path="$1"
-if [[ ! -f "$data_path" ]]; then
-    printf "Can not find data file '%s'\n" "$data_path" >&2
-    exit 1
+if [[ ! -f "$STATE_XML" ]]; then
+    # Initialize the state XML file.
+
+    init_xml "state" |
+    add_attr "/state" "created" "$(timestamp)" |
+    add_elem "/state" "files" >"$STATE_XML"
 fi
 
-data_dirname="$( dirname "$data_path" )"
-data_basename="$( basename "$data_path" )"
+# Get data from configuration file.  We currently assume that the
+# configuration file, config.xml, is available in the current directory.
+# We may change this later so that it's picked up from $DATA_DIR
+# instead.
 
-# Make sure that the sample and study XML files are located in the same
-# directory as the data file.
+# NOTE: These three variables are global.
+USERNAME="$( get_value "/config/username" <config.xml )"
+PASSWORD="$( get_value "/config/password" <config.xml )"
+CENTER_NAME="$( get_value "/config/center_name" <config.xml )"
 
-for xml_file in "study.xml" "sample.xml"; do
-    if [[ ! -f "$data_dirname/$xml_file" ]]; then
-        printf "Can not find '%s' in directory '%s'\n" \
-            "$xml_file" "$data_dirname" >&2
-        error=1
+# Examine the XML files in $DATA_DIR to figure out what they are.
+# Creates the associative array XML_FILES with file names as keys and
+# the top-level XML element as values.
+
+# NOTE: XML_FILES is global.
+declare -A XML_FILES
+
+for f in "$DATA_DIR"/*.xml; do
+    f_basename="$( basename "$f" )"
+
+    case "$f_basename" in
+        state.xml)      ;&  # fallthrough
+        submission*.xml)
+            continue    ;;
+    esac
+
+    f_type="$( xmlstarlet el "$f" | head -n 1 )"
+
+    XML_FILES["$f_basename"]="$f_type"
+done
+
+# Make sure each XML file is present in the state XML.
+
+for f in "${!XML_FILES[@]}"; do
+    data="$( get_value "//file[@name='$f']/@name" <"$STATE_XML" )"
+
+    if [[ -z "$data" ]]; then
+        # Insert file info into state XML.
+
+        tmpfile=$( mktemp )
+
+        add_elem "//files" "file" <"$STATE_XML" |
+        add_attr "//file[last()]" "name" "$f" >"$tmpfile"
+
+        mv -f "$tmpfile" "$STATE_XML"
     fi
 done
 
-if (( error )); then
-    exit 1
-fi
-
-# Figure out what to do with the given XML files.
-
 cat <<MESSAGE_END
-This tool will create and submit a submission XML for the European
-Nucleotide Archive (ENA).  Once the XML is submitted, the flat file
-provided on the command line ("$data_path") will also be submitted.
-------------------------------------------------------------------------
-MESSAGE_END
 
-select opt in \
-    "Submit ADDITTION of study and sample XML files" \
-    "Submit MODIFIED already submitted XML files" \
-    "Submit completed analysis XML file" \
-    "Exit this utility"; do
-    case $REPLY in
-        1)  action="ADD"
-            break   ;;
-        2)  action="MODIFY"
-            break   ;;
-        3)  action="ANALYSIS"
-            break   ;;
-        4)  exit 0  ;;
-    esac
-done
+This is a menu-driven tool for submitting files to the European
+Nucleotide Archive (ENA) at EMBL-EBI.
 
-# Create the submission XML file.
+The tool may be exited at any point by pressing <Ctrl>-C, or by choosing
+"Exit" at the main menu.
 
-xml_init_submission
-
-for f in study sample; do
-    case "$action" in
-        ADD)    xml_add "$f.xml" "$f"
-                xml_hold "$(date -u -d "+2years" +"%Y-%m-%dZ")"
-                ;;
-        MODIFY) xml_modify "$f.xml" "$f"
-                xml_hold "$(date -u -d "+2years" +"%Y-%m-%dZ")"
-                ;;
-    esac
-done
-
-if [[ "$action" == "ANALYSIS" ]]; then
-    xml_add "analysis.xml" "analysis"
-fi
-
-# Make submission.
-
-
-if [[ "$action" == "ANALYSIS" ]]; then
-    form="-F ANALYSIS=@analysis.xml"
-else
-    form="-F STUDY=@$data_dirname/study.xml \
-          -F SAMPLE=@$data_dirname/sample.xml"
-fi
-
-if ! curl --fail --insecure \
-    -o submission-response.xml.raw \
-    -F "SUBMISSION=@submission.xml" \
-    $form \
-    "$ENA_TEST_URL?auth=ENA%20$username%20$password"
-then
-    echo "Curl failed to submit the XML files" >&2
-    exit 1
-fi
-
-xmlstarlet fo submission-response.xml.raw >submission-response.xml
-
-success="$( xmlstarlet sel -t -v '/RECEIPT/@success' submission-response.xml )"
-
-xmlstarlet sel -t -v '//MESSAGES/INFO' -nl submission-response.xml
-xmlstarlet sel -t -v '//MESSAGES/ERROR' -nl submission-response.xml
-
-if [[ "$success" = "false" ]]; then
-    cat >&2 <<MESSAGE_END
-
-STATUS: Submission failed, please refer to the messages that ENA gave
-STATUS: as the response to the submission (above).  Consult the file
-STATUS: "submission-response.xml" for the formatted XML response, or the
-STATUS: file "submission-response.xml.raw" for the unformatted raw XML.
-MESSAGE_END
-    exit 1
-else
-    echo "STATUS: Success."
-fi
-
-if [[ "$action" == "ANALYSIS" ]]; then
-    echo "The completed analysis has been submitted."
-    exit 0
-fi
-
-# Put study and sample IDs inte original study and sample XML files as
-# the value of the "ENA_ID" tag.
-
-for t in study sample; do
-    oldIFS="$IFS"
-    IFS=$'\n'
-
-    ids=( $( xmlstarlet sel -t -v "//${t^^}/@accession" submission-response.xml ) )
-    als=( $( xmlstarlet sel -t -v "//${t^^}/@alias" submission-response.xml ) )
-
-
-    for (( i=0; i<${#ids[@]}; ++i )); do
-        id="${ids[i]}"
-        alias="${als[i]}"
-
-        printf "%s accession is '%s', alias='%s'\n" "${t^}" "$id" "$alias"
-
-        node="//${t^^}[@alias='$alias']/${t^^}_ATTRIBUTES"
-
-        # Don't do this if the XML already has an attribute tag named "ENA_ID".
-        old_id="$( xmlstarlet sel -t -v "$node/${t^^}_ATTRIBUTE/VALUE[../TAG='ENA_ID']" "$data_dirname/$t.xml" )"
-
-        if [[ -z "$old_id" ]]; then
-            xmlstarlet ed --inplace \
-                -s "$node" \
-                -t elem -n "${t^^}_ATTRIBUTE" -v '' \
-                -s "$node/${t^^}_ATTRIBUTE[last()]" \
-                -t elem -n 'TAG' -v 'ENA_ID' \
-                -s "$node/${t^^}_ATTRIBUTE[last()]" \
-                -t elem -n 'VALUE' -v "$id" "$data_dirname/$t.xml"
-        fi
-    done
-
-    # Also get the centre_name out of the study and sample XMLs.
-    cns=( $( xmlstarlet sel -t -v "//${t^^}/@center_name" "$data_dirname/$t.xml" ) )
-
-    # Save the sample IDs and aliases in their own variables, we'll need
-    # them for substituting in the flat file later. Do the same for the
-    # study (but whereas there may be many samples, there is only one
-    # study).
-    if [[ "$t" == "sample" ]]; then
-        sample_ids=( "${ids[@]}" )
-        sample_als=( "${als[@]}" )
-        sample_cns=( "${cns[@]}" )
-    elif [[ "$t" == "study" ]]; then
-        study_id="$id"      # Unused.
-        study_al="$alias"
-        study_cn="${cns[0]}"
-    fi
-
-    IFS="$oldIFS"
-done
-
-new_data_path="$data_dirname/new-$data_basename"
-new_data_basename="$( basename "$new_data_path" )"
-
-printf "Replacing the locus tags in '%s', creating '%s'...\n" \
-    "$data_path" "$new_data_path"
-
-# Create a simple sed script to carry out all substitutions.
-for (( i=0; i<${#sample_ids[@]}; ++i )); do
-    printf "s/%s/%s/g\n" "${sample_als[i]}" "${sample_ids[i]}"
-done >substitutions.sed
-
-# Execute substitutions.
-sed -f substitutions.sed "$data_path" > "$new_data_path"
-
-printf "Compressing '%s'...\n" "$new_data_path"
-gzip --best -v "$new_data_path"
-md5sum "$new_data_path.gz" | cut -d ' ' -f 1 >"$new_data_path.gz.md5"
-
-printf "Submitting '%s.gz' and its MD5 checksum to ENA's FTP server...\n" \
-    "$new_data_path"
-
-ftp -n "$ENA_WEBIN_FTP" <<FTP_END
-user $username $password
-binary
-put $new_data_path.gz $new_data_basename.gz
-put $new_data_path.gz.md5 $new_data_basename.gz.md5
-FTP_END
-
-echo "Creating analysis XML template"
-
-cat >analysis.xml <<XML_END
-<ANALYSIS_SET />
-XML_END
-
-xmlstarlet ed --inplace \
-    -s "/ANALYSIS_SET" -t elem -n "ANALYSIS" -v '' \
-    -i "//ANALYSIS" -t attr -n "alias" -v "%%ANALYSIS_ALIAS%%" \
-    -i "//ANALYSIS" -t attr -n "center_name" -v "$center_name" \
-    -s "//ANALYSIS" -t elem -n "TITLE" -v "%%ANALYSIS_TITLE%%" \
-    -s "//ANALYSIS" -t elem -n "DESCRIPTION" -v "%%ANALYSIS_DESCRIPTION%%" \
-    -s "//ANALYSIS" -t elem -n "STUDY_REF" -v '' \
-    -i "//STUDY_REF" -t attr -n "refname" -v "$study_al" \
-    -i "//STUDY_REF" -t attr -n "refcenter" -v "$study_cn" \
-    analysis.xml
-
-for (( i=0; i<${#sample_ids[@]}; ++i )); do
-    xmlstarlet ed --inplace \
-            -s "//ANALYSIS" -t elem -n "SAMPLE_REF" -v '' \
-            -i "//SAMPLE_REF[last()]" -t attr -n "refname" -v "${sample_als[i]}" \
-            -i "//SAMPLE_REF[last()]" -t attr -n "refcenter" -v "${sample_cns[i]}" \
-            analysis.xml
-done
-
-xmlstarlet ed --inplace \
-    -s "//ANALYSIS" -t elem -n "ANALYSIS_TYPE" -v '' \
-    -s "//ANALYSIS_TYPE" -t elem -n "SEQUENCE_ASSEMBLY" -v '' \
-    -s "//SEQUENCE_ASSEMBLY" -t elem -n "NAME" -v "%%ASSEMBLY_NAME%%" \
-    -s "//SEQUENCE_ASSEMBLY" -t elem -n "PARTIAL" \
-        -v "%%ASSEMBLY_IS_PARTIAL%%" \
-    -s "//SEQUENCE_ASSEMBLY" -t elem -n "COVERAGE" \
-        -v "%%ASSEMBLY_COVERAGE%%" \
-    -s "//SEQUENCE_ASSEMBLY" -t elem -n "PROGRAM" \
-        -v "%%ASSEMBLY_PROGRAM%%" \
-    -s "//SEQUENCE_ASSEMBLY" -t elem -n "PLATFORM" \
-        -v "%%ASSEMBLY_PLATFORM%%" \
-    analysis.xml
-
-xmlstarlet ed --inplace \
-    -s "//ANALYSIS" -t elem -n "FILES" -v '' \
-    -s "//FILES" -t elem -n "FILE" -v '' \
-    -i "//FILE" -t attr -n "filename" -v "$data_basename" \
-    -i "//FILE" -t attr -n "filetype" -v "%%FILE_FILETYPE%%" \
-    -i "//FILE" -t attr -n "checksum_method" -v "MD5" \
-    -i "//FILE" -t attr -n "checksum" -v "$(<"$new_data_path.gz.md5")" \
-    analysis.xml
-
-# Add controled vocabulary for filetype.
-
-cat >>analysis.xml <<XML_END
-
-<!--
-Controlled vocabulary for filetype (%%FILE_FILETYPE%%):
-    tab, bam, bai, cram, crai, vcf, vcf_aggregate, bcf, tabix, wig,
-    bed, gff, fasta, fastq, flatfile, contig_fasta, contig_flatfile,
-    scaffold_fasta, scaffold_flatfile, scaffold_agp, chromosome_fasta,
-    chromosome_flatfile, chromosome_agp, chromosome_list,
-    unlocalised_contig_list, unlocalised_scaffold_list, sample_list,
-    readme_file, phenotype_file, BioNano_native, other,
--->
-XML_END
-
-cat <<MESSAGE_END
-Done.
-
-The XML file 'analysis.xml' has been created.  This file
-contains placeholders for data that you must fill in.
-When the file is complete, please run this tool again and
-choose "Submit completed analysis XML file" from the menu.
-
-The placeholders are:
-
-    %%ANALYSIS_ALIAS%%          An alias (name) for the analysis.
-
-    %%ANALYSIS_TITLE%%          Title of the analysis which will be
-                                displayed in search results.
-
-    %%ANALYSIS_DESCRIPTION%%    Describes the analysis in detail.
-
-    %%ASSEMBLY_NAME%%           Name of assembly.
-
-    %%ASSEMBLY_IS_PARTIAL%%     One of {true, false, 1, 0}
-
-    %%ASSEMBLY_COVERAGE%%       Integer percent coverage.
-
-    %%ASSEMBLY_PROGRAM%%        Program and version of program.
-
-    %%ASSEMBLY_PLATFORM%%       Platform used.
-
-    %%FILE_FILETYPE%%           Please see comment in analysis.xml
+All menus expect numeric input.
 
 MESSAGE_END
-
-#vim: ft=sh
+main_menu
