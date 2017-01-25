@@ -30,10 +30,12 @@ fi
 
 if [ -f embl-validator.jar ]; then
     # Updating existing validator JAR file.
-    curl -z embl-validator.jar -o embl-validator.jar \
+    curl -O -z embl-validator.jar \
         "http://central.maven.org/maven2/uk/ac/ebi/ena/sequence/embl-api-validator/$current_version/embl-api-validator-$current_version.jar"
 else
     # Validator JAR file not present, fetching it.
-    curl -o embl-validator.jar \
+    curl -O \
         "http://central.maven.org/maven2/uk/ac/ebi/ena/sequence/embl-api-validator/$current_version/embl-api-validator-$current_version.jar"
 fi
+
+ln -f -s embl-api-validator-$current_version.jar embl-validator.jar
