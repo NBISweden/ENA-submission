@@ -10,12 +10,12 @@ if [[ "$#" != 1 ]]; then
     cat >&2 <<USAGE_END
 Usage:
     $0 directory
-    $0 flatfile
+    $0 directory/flatfile
 
     directory   - The path to a directory where XML files to be submitted
                   to the ENA are located.
 
-    flatfile    - The path to a flatfile to be submitted to the ENA.
+    directory/flatfile  - The path to a flatfile to be submitted to the ENA.
 
 NOTE: If the path to a flatfile is specified, it is assumed that the
 accompnying XML files are located in the same directory as that file.
