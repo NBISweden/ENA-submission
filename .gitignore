@@ -4,3 +4,4 @@ config.xml-local
 embl-validator.jar
 submission.xml
 t/
+*.jar
