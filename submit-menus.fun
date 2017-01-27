@@ -16,6 +16,7 @@ MENU_INFO_END
         select thing in \
             "Exit" \
             "Submit an XML file" \
+            "Replace locus tags in data file with biosample IDs" \
             "Upload a data file" \
             "Display current state of submissions"
         do
@@ -23,9 +24,10 @@ MENU_INFO_END
                 1)  exit 0  ;;
                 2)  submit_menu
                     break   ;;
-                3)  upload_menu
+                3)  modify_data_menu    ;;
+                4)  upload_menu
                     break   ;;
-                4)  display_state
+                5)  display_state
                     break   ;;
             esac
         done
