@@ -114,6 +114,9 @@ MENU_INFO_END
 
 function modify_data_menu
 {
+    # Will offer to replace the locus tag in the sample XML file with
+    # the biosample IDs received from the ENA.
+
     :
 }
 
