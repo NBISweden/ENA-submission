@@ -87,6 +87,11 @@ function upload_menu
 {
     # Will conditionally upload the given data file to the ENA FTP server.
 
+    if [[ -z "$DATA_FILE" ]]; then
+        echo "ERROR: No data file was given on the command line"
+        return
+    fi
+
     while true; do
         cat <<MENU_INFO_END
     ------------------------------------------------------------------------
