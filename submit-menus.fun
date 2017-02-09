@@ -100,11 +100,6 @@ function upload_menu
     ------------------------------------------------------------------------
 MENU_INFO_END
 
-        if [[ -z "$DATA_FILE" ]]; then
-            echo "ERROR: No data file was given on the command line"
-            return
-        fi
-
         select thing in \
             "Go back to the main menu" \
             "Submit the data file '$DATA_FILE'"
