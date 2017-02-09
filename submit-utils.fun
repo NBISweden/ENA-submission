@@ -9,6 +9,30 @@ function timestamp
     date -u +"%F %T"
 }
 
+function yesno
+{
+    # Get a simple yes/no from the user.  Default answer is 'no' (1).
+    #
+    # Parameters: none
+    #
+    #   stdin:  none
+    #   stdout: none
+    #
+    #   Returns 1 (no) or 0 (yes).
+    #
+    #   Example:
+    #       if yesno; then echo "got 'yes'"; else echo "got 'no'"; fi
+
+    echo -n "Yes/[N]o > "
+    read -r
+
+    if [[ "$REPLY" =~ ^[Yy] ]]; then
+        return 0
+    fi
+
+    return 1
+}
+
 function display_state
 {
     # Will eventually display the current state of submissions by
