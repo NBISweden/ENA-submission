@@ -109,7 +109,8 @@ for f in "${!XML_FILES[@]}"; do
         tmpfile=$( mktemp )
 
         add_elem "//files" "file" <"$STATE_XML" |
-        add_attr "//file[last()]" "name" "$f" >"$tmpfile"
+        add_attr "//file[last()]" "name" "$f" |
+        add_attr '//file[last()]' 'type' "${XML_FILES[$f]}" >"$tmpfile"
 
         mv -f "$tmpfile" "$STATE_XML"
     fi
