@@ -117,7 +117,30 @@ function modify_data_menu
     # Will offer to replace the locus tag in the sample XML file with
     # the biosample IDs received from the ENA.
 
-    :
+    if [[ -z "$DATA_FILE" ]]; then
+        echo "ERROR: No data file was given on the command line"
+        return
+    fi
+
+    # Get the sample XML file name(s)
+    local -a files=( $( get_value '//file[@type = "SAMPLE_SET"]/@name' <"$STATE_XML" ) )
+
+    while true; do
+        cat <<MENU_INFO_END
+    ------------------------------------------------------------------------
+                        You're at the MODIFY DATA menu.
+         At any time, just press enter to re-display the current menu.
+    ------------------------------------------------------------------------
+MENU_INFO_END
+
+        select thing in "${files[@]}"
+        do
+            echo "$REPLY"
+        done
+
+        # TODO: implement this
+        return
+    done
 }
 
 # vim: ft=sh
