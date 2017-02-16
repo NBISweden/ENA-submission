@@ -24,7 +24,8 @@ MENU_INFO_END
                 1)  exit 0  ;;
                 2)  submit_menu
                     break   ;;
-                3)  modify_data_menu    ;;
+                3)  modify_data_menu
+                    break   ;;
                 4)  upload_menu
                     break   ;;
                 5)  display_state
