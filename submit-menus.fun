@@ -123,8 +123,16 @@ function modify_data_menu
         return
     fi
 
-    # Get the sample XML file name(s)
-    local -a files=( $( get_value '//file[@type = "SAMPLE_SET"]/@name' <"$STATE_XML" ) )
+    # TODO:
+    # Get the biosaple IDs:
+    # xml sel -t -v '//file[@type="SAMPLE_SET"]/submission[@success="true"]/accession/@ext' state.xml
+    #
+    # Get the locus tags:
+    # xml sel -t -v '//file[@type="SAMPLE_SET"]/submission[@success="true"]/accession' state.xml
+    #
+    # Create menu, perform substitution.
+
+    # Code below is broken:
 
     while true; do
         cat <<MENU_INFO_END
@@ -134,9 +142,12 @@ function modify_data_menu
     ------------------------------------------------------------------------
 MENU_INFO_END
 
-        select thing in "${files[@]}"
+        select thing in "Go back to the main menu" "${files[@]}"
         do
-            echo "$REPLY"
+            case "$REPLY" in
+                1)  return  ;;
+                *) echo "$REPLY --> $thing"    ;;
+            esac
         done
 
         # TODO: implement this
