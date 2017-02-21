@@ -13,7 +13,7 @@
 
 source "$( dirname "$0" )"/submit-compat.fun
 
-current_version="1.1.155"
+current_version="1.1.157"
 
 # Use Curl+XMLStarlet to get the latest available version number.
 
