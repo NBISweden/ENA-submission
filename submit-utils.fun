@@ -228,6 +228,19 @@ FTP_END
 
 function perform_substitutions
 {
+    # Replaces one or several locus tags in $DATA_FILE with the
+    # corresponding biosample IDs (previously retrieved from the ENA).
+    # The $DATA_FILE may or may not be compressed.
+    #
+    # The substitution creates a new compressed data file with the name
+    # "$DATA_FILE-new.gz".  After calling this function, this new name
+    # *replaces* the $DATA_FILE as the current active data file.
+
+    #   Parameters:
+    #
+    #   1: Name of array variable holding names of locus tags
+    #   2: Name of array variable holding biosample IDs
+
     local -n tags="$1"
     local -n ids="$2"
 
@@ -239,6 +252,8 @@ function perform_substitutions
 
     local tmpsed=$( mktemp )
     trap 'rm -f "$tmpsed"' RETURN
+
+    # Create sed script to perform the substitutions.
 
     paste <( printf '%s\n' "${tags[@]}" ) \
           <( printf '%s\n' "${ids[@]}" ) |
