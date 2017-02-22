@@ -138,11 +138,13 @@ function modify_data_menu
     ------------------------------------------------------------------------
 MENU_INFO_END
 
+        printf 'File to modify: %s\n' "$DATA_FILE"
+
         select thing in "Go back to the main menu" "$subs"
         do
             case "$REPLY" in
                 1)  return  ;;
-                *) echo "$REPLY --> $thing"    ;;
+                2)  perform_substitutions "locustags" "biosamples"
             esac
         done
 
