@@ -226,4 +226,34 @@ put "$DATA_FILE".md5 "${DATA_FILE##*/}".md5
 FTP_END
 }
 
+function perform_substitutions
+{
+    local -n tags="$1"
+    local -n ids="$2"
+
+    local prefilter='cat'
+
+    case "$DATA_FILE" in
+        *.gz)   prefilter='gunzip -d -c' ;;
+    esac
+
+    local tmpsed=$( mktemp )
+    trap 'rm -f "$tmpsed"' RETURN
+
+    paste <( printf '%s\n' "${tags[@]}" ) \
+          <( printf '%s\n' "${ids[@]}" ) |
+    awk '{ printf("s/%s/%s/g\n", $1, $2) }' >"$tmpsed"
+
+    echo 'Performing substitution...'
+
+    command "$prefilter" "$DATA_FILE" | sed -f "$tmpsed" |
+    gzip --best >"$DATA_FILE-new.gz"
+
+    DATA_FILE="$DATA_FILE-new.gz"
+
+    echo 'Done.'
+    printf 'New data file is "%s"\n' "$DATA_FILE"
+}
+
+
 # vim: ft=sh
