@@ -151,8 +151,6 @@ function process_submission
         exit 1
     fi
 
-    # TODO: Parse reply, put IDs in state XML (if successful).
-
     local success
     success="$( get_value "/RECEIPT/@success" <"$response_xml" )"
 
