@@ -123,16 +123,12 @@ function modify_data_menu
         return
     fi
 
-    # TODO:
-    # Get the biosaple IDs:
-    # xml sel -t -v '//file[@type="SAMPLE_SET"]/submission[@success="true"]/accession/@ext' state.xml
-    #
-    # Get the locus tags:
-    # xml sel -t -v '//file[@type="SAMPLE_SET"]/submission[@success="true"]/accession' state.xml
-    #
-    # Create menu, perform substitution.
+    local biosamples=( $( get_value '//file[@type="SAMPLE_SET"]/submission[@success="true"]/accession/@ext' <"$STATE_XML" ) )
+    local locustags=( $( get_value  '//file[@type="SAMPLE_SET"]/submission[@success="true"]/accession' <"$STATE_XML" ) )
 
-    # Code below is broken:
+    local subs=$( paste <( printf '%s\n' "${locustags[@]}" ) \
+                        <( printf '%s\n' "${biosamples[@]}" ) |
+                  awk '{ printf("%s->%s ", $1, $2) }' )
 
     while true; do
         cat <<MENU_INFO_END
@@ -142,7 +138,7 @@ function modify_data_menu
     ------------------------------------------------------------------------
 MENU_INFO_END
 
-        select thing in "Go back to the main menu" "${files[@]}"
+        select thing in "Go back to the main menu" "$subs"
         do
             case "$REPLY" in
                 1)  return  ;;
