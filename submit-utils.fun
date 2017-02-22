@@ -6,17 +6,16 @@ function timestamp
     # The timestamp will be on the form "YYYY-MM-DD hh:mm:ss", in the
     # UTC time zone.
 
+    #   Parameters: none
+
     date -u +"%F %T"
 }
 
 function yesno
 {
     # Get a simple yes/no from the user.  Default answer is 'no' (1).
-    #
-    # Parameters: none
-    #
-    #   stdin:  none
-    #   stdout: none
+
+    #   Parameters: none
     #
     #   Returns 1 (no) or 0 (yes).
     #
@@ -44,6 +43,8 @@ function display_state
     # For now, it simply displays the raw contents of the state.xml
     # file.
 
+    #   Parameters: none
+
     if [[ ! -f "$STATE_XML" ]]; then
         printf 'Can not find "%s".\n' "$STATE_XML"
         return
@@ -60,7 +61,7 @@ function make_submission
     # successful, the returned ENA IDs etc. are stored in the state XML
     # file.
 
-    # Parameters:
+    #   Parameters:
     #
     #   1:  File name
     #   2:  File type
@@ -79,8 +80,8 @@ function make_submission
 function submit_simple
 {
     # Submits an XML file.
-    #
-    # Parameters:
+
+    #   Parameters:
     #
     #   1: File name
     #   2: Schema
@@ -132,8 +133,8 @@ function process_submission
     # updates the state XML with the IDs that ENA gives us.  The state
     # XML will also hold the submission status (the attribute "success"
     # will be set to either "true" or "false").
-    #
-    # Parameters:
+
+    #   Parameters:
     #
     #   1: File name (of the file referenced by the submission XML)
     #   2: Schema (of that file)
@@ -204,10 +205,8 @@ function make_upload
     # server ($ENA_WEBIN_FTP).  If the file is not compressed, it will
     # be compressed using gzip before it is uploaded.  The MD5 digest of
     # the compressed data file will also be uploaded.
-    #
-    # Parameters:
-    #
-    #   none
+
+    #   Parameters: none
 
     if [[ ! "$DATA_FILE" =~ \.gz$ ]]; then
         printf 'Compressing "%s"\n' "$DATA_FILE"
