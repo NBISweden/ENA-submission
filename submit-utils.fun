@@ -260,7 +260,7 @@ function perform_substitutions
 
     echo 'Performing substitution...'
 
-    command "$prefilter" "$DATA_FILE" | sed -f "$tmpsed" |
+    command $prefilter "$DATA_FILE" | sed -f "$tmpsed" |
     gzip --best >"$DATA_FILE-new.gz"
 
     DATA_FILE="${DATA_FILE%.gz}-new.gz"
