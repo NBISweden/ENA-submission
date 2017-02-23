@@ -1,7 +1,6 @@
 NOTE: This is a work in progress.
 NOTE: While in development, the script only knows about the ENA test server.
 
-TODO: Implement replacing locus tags in data file by biosample IDs.
 TODO: Construct analysis XML template.
 TODO: When viewing the state (XML), make it look pretty.
 TODO: Enable submission of runs and other XML types.
