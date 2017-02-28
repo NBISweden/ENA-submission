@@ -13,7 +13,7 @@
 
 source "$( dirname "${BASH_SOURCE[0]}" )"/submit-compat.fun
 
-current_version="1.1.157"
+current_version="1.1.158"
 
 # Use Curl+XMLStarlet to get the latest available version number.
 
