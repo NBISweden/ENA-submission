@@ -2,7 +2,7 @@
 
 set -e
 
-script_path="$( dirname "$0" )"
+script_path="$( dirname "${BASH_SOURCE[0]}" )"
 
 # Do command line parsing. there's not much of it as this script only
 # takes one (a directory name or a filename).
