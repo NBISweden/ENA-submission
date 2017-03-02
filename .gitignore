@@ -1,4 +1,5 @@
 *.jar
+*~
 SRA.*.xsd
 VAL_*
 config.xml-local
