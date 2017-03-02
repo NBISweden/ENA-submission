@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ANALYSIS_SET>
+    <ANALYSIS alias="%%ANALYSIS_ALIAS%%" center_name="%%CENTER_NAME%%">
+        <TITLE>%%ANALYSIS_TITLE%%</TITLE>
+        <DESCRIPTION>%%ANALYSIS_DESCRIPTION%%</DESCRIPTION>
+        <STUDY_REF refname="" refcenter="%%CENTER_NAME%%"/>
+        <ANALYSIS_TYPE>
+            <SEQUENCE_ASSEMBLY>
+                <NAME>%%ASSEMBLY_NAME%%</NAME>
+                <PARTIAL>%%ASSEMBLY_IS_PARTIAL_TRUE_OR_FALSE%%</PARTIAL>
+                <COVERAGE>%%ASSEMBLY_COVERAGE_INTEGER_PERCENT%%</COVERAGE>
+                <PROGRAM>%%ASSEMBLY_PROGRAM_AND_VERSION%%</PROGRAM>
+                <PLATFORM>%%ASSEMBLY_PLATFORM%%</PLATFORM>
+            </SEQUENCE_ASSEMBLY>
+        </ANALYSIS_TYPE>
+        <FILES>
+            <FILE
+                filename="%%DATA_FILE_NAME%%"
+                filetype="%%FILE_FILETYPE%%"
+                checksum="%%MD5_DIGEST%%"
+                checksum_method="MD5" />
+        </FILES>
+    </ANALYSIS>
+</ANALYSIS_SET>
+
+<!--
+ Controlled vocabulary for filetype (%%FILE_FILETYPE%%):
+ "contig_fasta"
+ "contig_flatfile"
+ "scaffold_fasta"
+ "scaffold_flatfile"
+ "scaffold_agp"
+ "chromosome_fasta"
+ "chromosome_flatfile"
+ "chromosome_agp"
+ "chromosome_list"
+ "unlocalised_contig_list"
+ "unlocalised_scaffold_list"
+-->
