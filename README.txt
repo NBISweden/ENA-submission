@@ -78,11 +78,11 @@ contents of the file "state.xml" in the data directory:
     </state>
 
 
-update_embl-validator.sh
+update-embl-validator
 ------------------------------------------------------------------------
 
 The ENA provides a validation tool for validating the contents of EMBL
-flat files.  The update_embl-validator.sh script downloads this tool (or
+flat files.  The update-embl-validator script downloads this tool (or
 updates an existing version of the tool).  More info about the validator
 may be found at http://www.ebi.ac.uk/ena/software/flat-file-validator
 
@@ -106,4 +106,3 @@ any possible errors in your data before submitting it to the ENA:
     VAL_INFO.txt
     VAL_REPORTS.txt
     VAL_SUMMARY.txt
-
