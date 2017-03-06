@@ -277,6 +277,15 @@ function fill_out_analysis
 
     # Parameters: none
 
+    # TODO:
+    #   The following template place-holders should be substituted:
+    #
+    #   1.  %%ANALYSIS_ALIAS%%
+    #   2.  %%CENTER_NAME%% (x2)
+    #   3.  %%ANALYSIS_DESCRIPTION%%
+    #   4.  %%DATA_FILE_NAME%%
+    #   5.  %%MD5_DIGEST%%
+
     true
 }
 
