@@ -11,7 +11,7 @@
 # The JAR file is fetched using 'curl', but only if the JAR file is
 # missing from the current directory, or if it's outdated.
 
-source "$( dirname "${BASH_SOURCE[0]}" )"/submit-compat.fun
+source "$( dirname "${BASH_SOURCE[0]}" )/submit-compat.shlib"
 
 current_version="1.1.158"
 

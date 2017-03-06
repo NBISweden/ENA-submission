@@ -30,10 +30,10 @@ ENA_WEBIN_FTP="webin.ebi.ac.uk"
 
 # Import our functions.
 
-source "$script_path"/submit-compat.fun
-source "$script_path"/submit-menus.fun
-source "$script_path"/submit-xml.fun
-source "$script_path"/submit-utils.fun
+source "$script_path/submit-compat.shlib"
+source "$script_path/submit-menus.shlib"
+source "$script_path/submit-xml.shlib"
+source "$script_path/submit-utils.shlib"
 
 # NOTE: DATA_DIR and DATA_FILE are global.
 DATA_FILE="$1"
