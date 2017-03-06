@@ -18,7 +18,7 @@ Usage:
     directory/flatfile  - The path to a flatfile to be submitted to the ENA.
 
 NOTE: If the path to a flatfile is specified, it is assumed that the
-accompnying XML files are located in the same directory as that file.
+accompanying XML files are located in the same directory as that file.
 
 USAGE_END
     exit 1
