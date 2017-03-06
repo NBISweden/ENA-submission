@@ -269,5 +269,16 @@ function perform_substitutions
     printf 'New data file is "%s"\n' "$DATA_FILE"
 }
 
+function fill_out_analysis
+{
+    # Uses the analysis XML template and the values from the state
+    # XML to create a partially filled-out analysis XML fle in the data
+    # directory.
+
+    # Parameters: none
+
+    true
+}
+
 
 # vim: ft=sh
