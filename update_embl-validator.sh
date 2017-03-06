@@ -39,3 +39,5 @@ else
 fi
 
 ln -f -s embl-api-validator-$current_version.jar embl-validator.jar
+
+printf 'embl-validator.jar is now at version %s\n' "$current_version"
