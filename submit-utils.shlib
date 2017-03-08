@@ -286,7 +286,10 @@ function fill_out_analysis
     #   4.  %%DATA_FILE_NAME%%
     #   5.  %%MD5_DIGEST%%
 
-    true
+    sed -e "s/%%CENTER_NAME%%/$CENTER_NAME/g" \
+        -e "s/%%DATA_FILE_NAME%%/${DATA_FILE##*/}/g" \
+        -e "s/%%MD5_DIGEST%%/$(<$DATA_FILE.md5)/g" \
+        "$script_path/analysis.xml.template" >"$DATA_DIR/analysis.xml"
 }
 
 
