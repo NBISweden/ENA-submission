@@ -18,6 +18,7 @@ MENU_INFO_END
             "Submit an XML file" \
             "Replace locus tags in data file with biosample IDs" \
             "Upload a data file" \
+            "Create analysis XML template" \
             "Display current state of submissions"
         do
             case "$REPLY" in
@@ -28,7 +29,9 @@ MENU_INFO_END
                     break   ;;
                 4)  upload_menu
                     break   ;;
-                5)  display_state
+                5)  create_analysis_template
+                    break   ;;
+                6)  display_state
                     break   ;;
             esac
         done
