@@ -286,6 +286,11 @@ function create_analysis_template
     #   4.  %%DATA_FILE_NAME%%
     #   5.  %%MD5_DIGEST%%
 
+    if [[ -z "$DATA_FILE" ]]; then
+        echo "ERROR: No data file was given on the command line"
+        return
+    fi
+
     sed -e "s/%%CENTER_NAME%%/$CENTER_NAME/g" \
         -e "s/%%DATA_FILE_NAME%%/${DATA_FILE##*/}/g" \
         -e "s/%%MD5_DIGEST%%/$(<$DATA_FILE.md5)/g" \
